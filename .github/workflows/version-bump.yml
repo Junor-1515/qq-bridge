@@ -1,0 +1,36 @@
+name: Auto version bump
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'assets/**'
+      - '.github/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+jobs:
+  bump:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (!contains(github.event.head_commit.message, '[skip version]') &&
+       !contains(github.event.head_commit.message, 'chore(release)'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bump version
+        run: node scripts/bump-version.mjs
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          [ -f package-lock.json ] && git add package-lock.json
+          git commit -m "chore(release): v$(node -p "require('./package.json').version") [skip version]"
+          git push

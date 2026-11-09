@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>语音（TTS）设置</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f6f6f8; --card:#fff; --text:#1c1c1e; --muted:#6b6b73; --line:#e3e3e8; --accent:#ddaacc; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --card:#222226; --text:#f2f2f5; --muted:#9a9aa3; --line:#33333a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:22px 16px 60px; background:var(--bg); color:var(--text); font:14px/1.6 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  main { max-width:820px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:18px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  h2 { font-size:14px; margin:0 0 12px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+  .row { display:flex; gap:12px; align-items:center; padding:7px 0; flex-wrap:wrap; }
+  .row > label { flex:0 0 150px; color:var(--muted); font-size:13px; }
+  input[type=text], input[type=number], select, textarea { flex:1 1 220px; min-width:0; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text); font:inherit; }
+  input[type=checkbox] { width:17px; height:17px; }
+  .hint { color:var(--muted); font-size:12px; flex-basis:100%; margin-left:162px; }
+  .hint.flat { margin-left:0; }
+  button { padding:8px 16px; border-radius:9px; border:1px solid var(--line); background:var(--accent); color:#3a2433; font:inherit; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--text); font-weight:500; }
+  button.tiny { padding:4px 10px; font-size:12px; }
+  button:disabled { opacity:.55; cursor:default; }
+  .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #status { font-size:13px; color:var(--muted); }
+  .card { border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .card h3 { font-size:13px; margin:0 0 8px; }
+  .tag { display:inline-block; margin:2px 5px 2px 0; padding:1px 8px; border:1px solid var(--line); border-radius:999px; font-size:11px; color:var(--muted); }
+  .ok { color:#2e9e5b; } .bad { color:#d0453b; }
+  audio { width:100%; margin-top:8px; }
+  code { background:rgba(128,128,128,.15); padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>语音（TTS）设置</h1>
+  <div class="sub">会话里文字始终是中文，语音条的语言由音色决定（日语会先翻译再合成）。改完点保存即生效，不用重启桥接。<span id="navLinks"></span></div>
+
+  <section>
+    <h2>总开关</h2>
+    <div class="row"><label>启用语音</label><input type="checkbox" id="enabled" /></div>
+    <div class="row"><label>默认引擎</label>
+      <select id="engine">
+        <option value="sapi">Windows 语音（免费、离线、音色机械）</option>
+        <option value="sovits">GPT-SoVITS（本地服务、能克隆音色）</option>
+        <option value="edge">edge-tts（微软云端、要装 python 包）</option>
+      </select>
+    </div>
+    <div class="row"><label>默认音色</label><select id="activeVoice"></select></div>
+    <div class="hint" id="statsLine">统计读取中…</div>
+    <div class="actions" style="margin-top:8px"><button id="saveMain">保存设置</button><span id="status"></span></div>
+  </section>
+
+  <section>
+    <h2>功能一 · 点名朗读</h2>
+    <div class="row"><label>允许朗读</label><input type="checkbox" id="explicitEnabled" /></div>
+    <div class="row"><label>最长读多少字</label><input type="number" id="explicitMaxChars" min="8" max="2000" step="10" /></div>
+    <div class="row"><label>说「用日语读」时换音色（一般留空）</label><input id="langVoicesJa" placeholder="留空 = 就用当前音色" /></div>
+    <div class="row"><label>说「用中文读」时换音色（一般留空）</label><input id="langVoicesZh" placeholder="留空 = 就用当前音色" /></div>
+    <div class="hint flat">「用日语读」/「用中文读」默认不换音色、不换模型，只把文字翻成那种语言再念。这里只有你想特意换一副嗓子时才填。</div>
+    <div class="row"><label>念之前要有多近的一句文字</label><input type="number" id="explicitLeadIn" min="0" max="600" step="10" /><span class="hint">秒，0 = 不检查</span></div>
+    <div class="hint">在群里直接说「读一下这段……」它就会用 qq_speak 发一条语音；超出长度的部分会截断成省略号。日语音色会先翻译成口语日语。</div>
+  </section>
+
+  <section>
+    <h2>功能二 · 自动跟一条语音</h2>
+    <div class="row"><label>启用</label><input type="checkbox" id="autoEnabled" /></div>
+    <div class="row"><label>默认语言</label><select id="autoLang">
+      <option value="">跟当前音色（推荐）</option>
+      <option value="zh">中文</option>
+      <option value="ja">日语（中文会先翻成日语再读）</option>
+    </select></div>
+    <div class="hint flat">只挑语音条念什么语言，不换音色。留「跟当前音色」时，日语模型读中文会自动翻译，中文模型读中文就原样念。</div>
+    <div class="row"><label>每几条消息试一次</label>
+      <span style="display:flex;gap:6px;align-items:center;flex:1 1 220px">
+        <input type="number" id="autoMinSeg" min="1" max="200" style="width:80px" /><span>到</span>
+        <input type="number" id="autoMaxSeg" min="1" max="200" style="width:80px" /><span>条之间随机</span>
+      </span>
+    </div>
+    <div class="row"><label>命中的概率</label><input type="number" id="autoProb" min="0" max="1" step="0.05" style="width:90px" /></div>
+    <div class="row"><label>太短就不读</label><input type="number" id="autoMinChars" min="1" max="200" step="1" style="width:90px" /><span class="hint flat">字以下跳过</span></div>
+    <div class="row"><label>太长就截断</label><input type="number" id="autoMaxChars" min="10" max="2000" step="10" style="width:90px" /><span class="hint flat">字，优先在句号处收</span></div>
+    <div class="row"><label>每天最多</label><input type="number" id="autoMaxPerDay" min="0" max="500" step="1" style="width:90px" /><span class="hint flat">条（0 = 不限）</span></div>
+    <div class="row"><label>两条之间至少隔</label><input type="number" id="autoMinGapSec" min="0" max="3600" step="10" style="width:90px" /><span class="hint flat">秒</span></div>
+    <div class="hint">「一条消息」按它一次回复的整段算（拆成好几条发出去之前的那一整段），读的也是整段，不会跟文字错位。自动语音不占用语音条数配额（那个每分钟 2 条的限制只管手动发）。</div>
+    <div class="hint" id="runtimeLine">运行状态读取中…</div>
+  </section>
+
+  <section>
+    <h2>音色</h2>
+    <div id="voices"></div>
+    <div class="actions" style="margin-top:6px">
+      <button id="addVoice" class="ghost">新增音色</button>
+      <button id="saveVoices">保存音色列表</button>
+    </div>
+    <div class="hint">id 只是内部编号（别重名）；语言选「日语」时中文原文会先翻译成口语日语。SoVITS 每换一个模型就多一条音色，填它自己的服务地址（默认 127.0.0.1:9880）。</div>
+  </section>
+
+  <section>
+    <h2>试听</h2>
+    <div class="row"><label>音色</label><select id="testVoiceSel"></select></div>
+    <div class="row"><label>情绪</label>
+      <select id="testMood" style="flex:0 1 200px">
+        <option value="">不指定（用默认参考音频）</option>
+        <option value="calm">平静</option><option value="happy">开心</option><option value="sad">难过</option>
+        <option value="angry">生气</option><option value="shy">害羞</option><option value="surprised">惊讶</option>
+      </select>
+    </div>
+    <div class="row"><label>试听文字</label><input type="text" id="testText" value="测试一下语音合成，听得见吗？" /></div>
+    <div class="actions"><button id="testBtn">合成</button><span id="testState" class="hint flat"></span></div>
+    <audio id="player" controls style="display:none"></audio>
+    <div class="hint" id="testSpoken"></div>
+  </section>
+
+  <section>
+    <h2>参考音频库</h2>
+    <div class="row"><label>上传音频</label><input type="file" id="refFile" accept="audio/*" /></div>
+    <div class="row"><label>备注</label><input type="text" id="refNote" placeholder="例如：温柔说话 / 生气吐槽 / 撒娇" maxlength="120" /></div>
+    <div class="row"><label>语言</label><select id="refLang" style="flex:0 1 160px"><option value="zh">中文</option><option value="ja">日语</option></select></div>
+    <div class="row"><label>适用情绪</label><div id="refMoods" style="flex:1 1 240px"></div></div>
+    <div class="actions"><button id="refUpload">上传</button><span id="refState" class="hint flat"></span></div>
+    <div id="refList" style="margin-top:10px"></div>
+    <div class="hint">SoVITS 合成时会按当前这句的情绪挑同语言、标签对得上的参考音频（没标签的作为兜底）。一段 3~10 秒、干净的干声效果最好。</div>
+  </section>
+
+  <section>
+    <h2>日语翻译</h2>
+    <div class="row"><label>启用翻译</label><input type="checkbox" id="trEnabled" /></div>
+    <div class="row"><label>接口地址</label><input type="text" id="trBaseUrl" /></div>
+    <div class="row"><label>模型</label><input type="text" id="trModel" /></div>
+    <div class="row"><label>API Key 来源</label><input type="text" id="trKeyEnv" placeholder="环境变量名，例如 JSNU_API_KEY" /></div>
+    <div class="hint" id="trKeyLine">Key 状态读取中…</div>
+    <div class="hint">只对日语音色、中文原文生效；译文按 hash 缓存，同一句不重复翻。要保住「日语味道」靠的是提示词里要求用タメ口、保留ね・よ・じゃん，不翻成敬语。</div>
+  </section>
+
+  <section>
+    <h2>按会话覆盖</h2>
+    <div id="overrides"></div>
+    <div class="actions" style="margin-top:6px">
+      <button id="addOverride" class="ghost">加一条</button>
+      <button id="saveOverrides">保存覆盖</button>
+    </div>
+    <div class="hint">键写 <code>group:607400395</code> / <code>private:2492803440</code>；<code>*</code> 是给所有会话兜底的默认档。比如某个群只让它读日语、另一个群干脆别自动语音。</div>
+  </section>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const token = params.get('token') || '';
+let S = null;
+const MOODS = [['calm','平静'],['happy','开心'],['sad','难过'],['angry','生气'],['shy','害羞'],['surprised','惊讶']];
+const ENGINES = [['sapi','Windows 语音'],['sovits','GPT-SoVITS'],['edge','edge-tts']];
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]; }); }
+async function api(p, opt) {
+  opt = opt || {};
+  const u = p + (p.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
+  const res = await fetch(u, Object.assign({ headers: { 'content-type': 'application/json', 'x-console-token': token } }, opt));
+  const txt = await res.text();
+  try { return JSON.parse(txt); } catch (e) { return { ok: false, error: txt.slice(0, 200) }; }
+}
+function setStatus(t, bad) { const el = $('status'); el.textContent = t; el.className = bad ? 'bad' : 'ok'; }
+
+function fillSelect(sel, items, value) {
+  sel.innerHTML = items.map(function (kv) { return '<option value="' + kv[0] + '">' + esc(kv[1]) + '</option>'; }).join('');
+  if (value) sel.value = value;
+}
+
+async function load() {
+  const data = await api('/api/tts/settings');
+  if (!data.ok) { setStatus('读取失败：' + (data.error || ''), true); return; }
+  S = data.settings;
+  $('enabled').checked = S.enabled !== false;
+  $('engine').value = S.engine;
+  const voiceOpts = S.voices.map(function (v) { return [v.id, v.label + '（' + v.engine + '/' + v.lang + '）']; });
+  fillSelect($('activeVoice'), voiceOpts, S.activeVoice);
+  fillSelect($('testVoiceSel'), voiceOpts, S.activeVoice);
+  $('explicitEnabled').checked = S.explicit.enabled !== false;
+  $('explicitMaxChars').value = S.explicit.maxChars;
+  $('explicitLeadIn').value = Math.round((S.explicit.leadInMs ?? 90000) / 1000);
+  $('langVoicesJa').value = (S.langVoices && S.langVoices.ja) || '';
+  $('langVoicesZh').value = (S.langVoices && S.langVoices.zh) || '';
+  $('autoEnabled').checked = S.auto.enabled !== false;
+  $('autoLang').value = S.auto.lang || '';
+  $('autoMinSeg').value = S.auto.minSegments;
+  $('autoMaxSeg').value = S.auto.maxSegments;
+  $('autoProb').value = S.auto.probability;
+  $('autoMinChars').value = S.auto.minChars;
+  $('autoMaxChars').value = S.auto.maxChars;
+  $('autoMaxPerDay').value = S.auto.maxPerDay;
+  $('autoMinGapSec').value = Math.round((S.auto.minGapMs || 0) / 1000);
+  $('trEnabled').checked = S.translate.enabled !== false;
+  $('trBaseUrl').value = S.translate.baseUrl;
+  $('trModel').value = S.translate.model;
+  $('trKeyEnv').value = S.translate.apiKeyEnv;
+  $('trKeyLine').innerHTML = data.translateKeyPresent ? '<span class="ok">Key 已找到</span>（翻译能用）' : '<span class="bad">没找到 Key</span>：把 <code>' + esc(S.translate.apiKeyEnv) + '</code> 写进环境变量或 ~/.dsh/.credentials.yaml 的 refs 里';
+  const st = data.stats || {};
+  $('statsLine').textContent = '已生成 ' + (st.files || 0) + ' 个音频文件，共 ' + Math.round((st.bytes || 0) / 1024) + ' KB';
+  const rt = data.runtime || {};
+  const segs = rt.segments || {};
+  const nexts = rt.nextAt || {};
+  const lines = Object.keys(segs).map(function (k) {
+    return k + '：' + segs[k] + ' / ' + (nexts[k] || '-') + ' 条';
+  });
+  $('runtimeLine').textContent = '今天已发 ' + ((rt.daily && rt.daily.count) || 0) + ' 条' +
+    (lines.length ? '；各会话进度 ' + lines.join('，') : '；还没有会话在计数（它先得说几句话）');
+  renderMoodPicker();
+  renderVoices();
+  renderRefs();
+  renderOverrides();
+}
+
+function renderMoodPicker() {
+  $('refMoods').innerHTML = MOODS.map(function (m) {
+    return '<label style="margin-right:10px;white-space:nowrap"><input type="checkbox" class="rmood" value="' + m[0] + '" /> ' + m[1] + '</label>';
+  }).join('');
+}
+
+function renderVoices() {
+  $('voices').innerHTML = S.voices.map(function (v) {
+    const f = function (k, label, type, extra) {
+      const t = type || 'text';
+      return '<div class="row"><label>' + esc(label) + '</label><input type="' + t + '" data-f="' + k + '" value="' + esc(v[k]) + '" ' + (extra || '') + ' /></div>';
+    };
+    return '<div class="card voice" data-id="' + esc(v.id) + '">' +
+      '<h3>' + esc(v.label || v.id) + ' <span class="tag">' + esc(v.engine) + '</span><span class="tag">' + esc(v.lang) + '</span></h3>' +
+      f('id', 'id') + f('label', '显示名') +
+      '<div class="row"><label>引擎</label><select data-f="engine">' + ENGINES.map(function (e) { return '<option value="' + e[0] + '"' + (v.engine === e[0] ? ' selected' : '') + '>' + e[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="row"><label>语言</label><select data-f="lang">' +
+        [['zh','中文'],['ja','日语'],['auto','按文字自动判断']].map(function (l) { return '<option value="' + l[0] + '"' + (v.lang === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select></div>' +
+      f('baseUrl', 'SoVITS 地址') +
+      '<div class="row"><label>SoVITS 接口版本</label><select data-f="apiFlavor">' +
+        [['v2','v2（api_v2，推荐）'],['v1','v1']].map(function (x) { return '<option value="' + x[0] + '"' + (v.apiFlavor === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
+      f('promptText', '参考文本（可空）') + f('promptLang', '参考文本语言（zh/ja/en）') +
+      f('refAudio', '固定参考音频路径（可空）') +
+      '<div class="row"><label>从参考音频库里选</label><select class="refPick"><option value="">（点一条，自动填路径和参考文本）</option>' +
+        (S.refAudios || []).map(function (a, i) {
+          const nm = a.note || String(a.file || '').split(/[\\/]/).pop();
+          return '<option value="' + i + '">' + esc(nm) + ' · ' + esc(a.lang) + ((a.moods || []).length ? ' · ' + esc(a.moods.join('/')) : '') + '</option>';
+        }).join('') + '</select></div>' +
+      f('speed', '语速（0.5~2）', 'number', 'step="0.05" min="0.5" max="2"') +
+      f('sapiVoice', 'Windows 音色名（可空）') +
+      f('sapiRate', 'Windows 语速（-10~10）', 'number', 'step="1" min="-10" max="10"') +
+      f('edgeVoice', 'edge-tts 音色') +
+      '<div class="actions" style="margin-top:6px"><button class="tiny ghost testOne" data-id="' + esc(v.id) + '">用这个音色试听</button><button class="tiny ghost delOne" data-id="' + esc(v.id) + '">删除</button></div>' +
+    '</div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('.testOne'), function (b) {
+    b.onclick = function () { $('testVoiceSel').value = b.dataset.id; test(); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.refPick'), function (sel) {
+    sel.onchange = function () {
+      const a = (S.refAudios || [])[Number(sel.value)];
+      if (!a || !a.file) return;
+      const card = sel.closest('.card.voice');
+      if (!card) return;
+      const set = function (k, v) { const el = card.querySelector('[data-f="' + k + '"]'); if (el) el.value = v == null ? '' : v; };
+      set('refAudio', a.file);
+      set('promptText', a.promptText || '');
+      if (a.lang) set('promptLang', a.lang);
+      setStatus('已填入参考音频：' + (a.note || String(a.file).split(/[\\/]/).pop()) + '（记得点保存）');
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.delOne'), function (b) {
+    b.onclick = function () {
+      const id = b.dataset.id;
+      if (!confirm('删掉音色 ' + id + '？')) return;
+      save({ voices: collectVoices().filter(function (v) { return v.id !== id; }) }).then(function () { setStatus('音色已删除'); });
+    };
+  });
+}
+
+function collectVoices() {
+  return Array.prototype.map.call(document.querySelectorAll('.card.voice'), function (card) {
+    const out = { id: card.dataset.id };
+    Array.prototype.forEach.call(card.querySelectorAll('[data-f]'), function (el) {
+      const k = el.dataset.f;
+      out[k] = el.type === 'number' ? Number(el.value) : el.value;
+    });
+    return out;
+  });
+}
+
+function renderRefs() {
+  const list = S.refAudios || [];
+  if (!list.length) { $('refList').innerHTML = '<div class="hint flat">还没有参考音频。</div>'; return; }
+  $('refList').innerHTML = list.map(function (a, i) {
+    const moods = (a.moods || []).map(function (m) {
+      const hit = MOODS.filter(function (x) { return x[0] === m; })[0];
+      return '<span class="tag">' + esc(hit ? hit[1] : m) + '</span>';
+    }).join('');
+    return '<div class="card"><h3>' + esc(a.note || a.file.split('/').pop()) + ' <span class="tag">' + esc(a.lang) + '</span>' + moods + '</h3>' +
+      '<div class="hint flat">' + esc(a.file) + '</div>' +
+      '<div class="actions" style="margin-top:6px"><button class="tiny ghost delRef" data-i="' + i + '">删除</button></div></div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('.delRef'), function (b) {
+    b.onclick = function () {
+      const i = Number(b.dataset.i);
+      if (!confirm('从列表里删掉这条参考音频？（文件留在磁盘上）')) return;
+      const next = (S.refAudios || []).slice();
+      next.splice(i, 1);
+      save({ refAudios: next }).then(function () { setStatus('参考音频已移除'); });
+    };
+  });
+}
+
+function triSel(field, val, labelOn, labelOff) {
+  return '<select data-f="' + field + '">' +
+    '<option value="">跟随全局</option>' +
+    '<option value="1"' + (val === true ? ' selected' : '') + '>' + labelOn + '</option>' +
+    '<option value="0"' + (val === false ? ' selected' : '') + '>' + labelOff + '</option>' +
+  '</select>';
+}
+
+function renderOverrides() {
+  const ov = S.overrides || {};
+  const keys = Object.keys(ov);
+  const voiceOpts = S.voices.map(function (v) { return '<option value="' + esc(v.id) + '">' + esc(v.label) + '</option>'; }).join('');
+  $('overrides').innerHTML = keys.length ? keys.map(function (k) {
+    const o = ov[k] || {};
+    const au = (o.auto && typeof o.auto === 'object') ? o.auto : {};
+    return '<div class="card ovRow" data-key="' + esc(k) + '">' +
+      '<div class="row"><label>会话键</label><input type="text" data-f="key" value="' + esc(k) + '" /></div>' +
+      '<div class="row"><label>语音开关</label>' + triSel('enabled', o.enabled, '开', '关') + '</div>' +
+      '<div class="row"><label>音色</label><select data-f="activeVoice"><option value="">跟随全局</option>' + voiceOpts + '</select></div>' +
+      '<div class="row"><label>自动语音</label>' + triSel('autoEnabled', au.enabled, '开', '关') + '</div>' +
+      '<div class="row"><label>自动语音语言</label><select data-f="autoLang"><option value="">跟随全局</option><option value="zh"' + (au.lang === 'zh' ? ' selected' : '') + '>中文</option><option value="ja"' + (au.lang === 'ja' ? ' selected' : '') + '>日语</option></select></div>' +
+      '<div class="row"><label>每几条到几条</label><span style="display:flex;gap:6px;align-items:center;flex:1 1 220px">' +
+        '<input type="number" data-f="autoMin" min="1" max="200" style="width:80px" value="' + esc(au.minSegments == null ? '' : au.minSegments) + '" /><span>到</span>' +
+        '<input type="number" data-f="autoMax" min="1" max="200" style="width:80px" value="' + esc(au.maxSegments == null ? '' : au.maxSegments) + '" /></span></div>' +
+      '<div class="row"><label>命中概率</label><input type="number" data-f="autoProb" min="0" max="1" step="0.05" style="width:90px" value="' + esc(au.probability == null ? '' : au.probability) + '" /></div>' +
+      '<div class="actions" style="margin-top:4px"><button class="tiny ghost delOv">删除这条</button></div>' +
+    '</div>';
+  }).join('') : '<div class="hint flat">没有覆盖，全部按全局设置。</div>';
+  Array.prototype.forEach.call(document.querySelectorAll('.ovRow [data-f=activeVoice]'), function (sel) {
+    const key = sel.closest('.ovRow').dataset.key;
+    const want = (ov[key] && ov[key].activeVoice) || '';
+    if (want) sel.value = want;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.delOv'), function (b) {
+    b.onclick = function () { b.closest('.ovRow').remove(); };
+  });
+}
+
+function collectOverrides() {
+  const out = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.ovRow'), function (card) {
+    const key = card.querySelector('[data-f=key]').value.trim();
+    if (!key) return;
+    const o = {};
+    const en = card.querySelector('[data-f=enabled]').value;
+    if (en === '1') o.enabled = true;
+    if (en === '0') o.enabled = false;
+    const voiceId = card.querySelector('[data-f=activeVoice]').value;
+    if (voiceId) o.activeVoice = voiceId;
+    const auto = {};
+    const ae = card.querySelector('[data-f=autoEnabled]').value;
+    if (ae === '1') auto.enabled = true;
+    if (ae === '0') auto.enabled = false;
+    const al = card.querySelector('[data-f=autoLang]').value;
+    if (al === 'zh' || al === 'ja') auto.lang = al;
+    const min = Number(card.querySelector('[data-f=autoMin]').value);
+    const max = Number(card.querySelector('[data-f=autoMax]').value);
+    const prob = card.querySelector('[data-f=autoProb]').value;
+    if (min > 0) auto.minSegments = min;
+    if (max > 0) auto.maxSegments = max;
+    if (prob !== '') auto.probability = Number(prob);
+    if (Object.keys(auto).length) o.auto = auto;
+    out[key] = o;
+  });
+  return out;
+}
+
+async function save(patch) {
+  setStatus('保存中…');
+  const res = await api('/api/tts/settings', { method: 'POST', body: JSON.stringify({ settings: patch }) });
+  if (!res.ok) { setStatus('保存失败：' + (res.error || ''), true); return res; }
+  S = res.settings;
+  setStatus('已保存');
+  return res;
+}
+
+async function test() {
+  const voiceId = $('testVoiceSel').value;
+  const text = $('testText').value.trim() || '测试一下。';
+  const mood = $('testMood').value;
+  $('testState').textContent = '合成中…';
+  $('testSpoken').textContent = '';
+  const res = await api('/api/tts/preview', { method: 'POST', body: JSON.stringify({ voiceId: voiceId, text: text, mood: mood }) });
+  if (!res.ok) { $('testState').textContent = '失败：' + (res.error || ''); return; }
+  $('testState').textContent = '引擎 ' + res.engine + ' · 语言 ' + res.lang + (res.translated ? ' · 已翻译' : '');
+  $('testSpoken').textContent = res.translated ? '实际读的是：' + res.spoken : '';
+  const player = $('player');
+  player.src = res.url;
+  player.style.display = 'block';
+  player.play().catch(function () {});
+}
+
+async function uploadRef() {
+  const file = $('refFile').files[0];
+  if (!file) { $('refState').textContent = '先选一个音频文件'; return; }
+  const moods = Array.prototype.filter.call(document.querySelectorAll('.rmood'), function (c) { return c.checked; }).map(function (c) { return c.value; });
+  $('refState').textContent = '上传中（' + Math.round(file.size / 1024) + ' KB）…';
+  const b64 = await new Promise(function (resolve, reject) {
+    const fr = new FileReader();
+    fr.onload = function () { resolve(String(fr.result).replace(/^data:[^,]*,/, '')); };
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+  const res = await api('/api/tts/ref-audio', { method: 'POST', body: JSON.stringify({ name: file.name, data: b64, note: $('refNote').value.trim(), lang: $('refLang').value, moods: moods }) });
+  if (!res.ok) { $('refState').textContent = '失败：' + (res.error || ''); return; }
+  S.refAudios = res.refAudios;
+  $('refState').textContent = '已加入：' + (res.entry.note || res.entry.file);
+  $('refFile').value = '';
+  $('refNote').value = '';
+  renderRefs();
+}
+
+$('saveMain').onclick = async function () {
+  const activeVoice = $('activeVoice').value;
+  await save({
+    enabled: $('enabled').checked,
+    engine: $('engine').value,
+    activeVoice: activeVoice,
+    explicit: { enabled: $('explicitEnabled').checked, maxChars: Number($('explicitMaxChars').value), leadInMs: Math.max(0, Number($('explicitLeadIn').value) || 0) * 1000 },
+    langVoices: { ja: $('langVoicesJa').value.trim(), zh: $('langVoicesZh').value.trim() },
+    auto: {
+      enabled: $('autoEnabled').checked,
+      minSegments: Number($('autoMinSeg').value),
+      maxSegments: Number($('autoMaxSeg').value),
+      probability: Number($('autoProb').value),
+      minChars: Number($('autoMinChars').value),
+      maxChars: Number($('autoMaxChars').value),
+      maxPerDay: Number($('autoMaxPerDay').value),
+      minGapMs: Math.round(Number($('autoMinGapSec').value) * 1000),
+      lang: $('autoLang').value
+    },
+    translate: {
+      enabled: $('trEnabled').checked,
+      baseUrl: $('trBaseUrl').value.trim(),
+      model: $('trModel').value.trim(),
+      apiKeyEnv: $('trKeyEnv').value.trim()
+    }
+  });
+  load();
+};
+$('saveVoices').onclick = async function () { await save({ voices: collectVoices() }); load(); };
+$('saveOverrides').onclick = async function () { await save({ overrides: collectOverrides() }); load(); };
+$('addVoice').onclick = function () {
+  const n = (S.voices || []).length + 1;
+  S.voices.push({ id: 'voice' + n, label: '新音色 ' + n, engine: 'sapi', lang: 'zh' });
+  renderVoices();
+};
+$('addOverride').onclick = function () {
+  if (!S.overrides) S.overrides = {};
+  let key = 'group:607400395';
+  let i = 2;
+  while (key in S.overrides) { key = 'group:607400' + i; i++; }
+  S.overrides[key] = {};
+  renderOverrides();
+};
+$('navLinks').innerHTML = ' · <a href="/bili?token=' + encodeURIComponent(token) + '">B 站设置 ↗</a> · <a href="/music?token=' + encodeURIComponent(token) + '">音乐 / 视频 ↗</a> · <a href="/qzone?token=' + encodeURIComponent(token) + '">QQ 空间 ↗</a>';
+$('testBtn').onclick = test;
+$('refUpload').onclick = uploadRef;
+load();
+</script>
+</body>
+</html>

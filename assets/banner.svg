@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="QQ ⇄ DSH">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#17132b"/></linearGradient>
+    <linearGradient id="ac" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff8fc7"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.045"/></pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1200" height="320" rx="24" fill="url(#bg)"/>
+  <rect width="1200" height="320" rx="24" fill="url(#grid)"/>
+  <circle cx="1050" cy="60" r="150" fill="#ff8fc7" opacity="0.14" filter="url(#glow)"/>
+  <circle cx="1130" cy="280" r="120" fill="#7dd3fc" opacity="0.12" filter="url(#glow)"/>
+  <g font-family="Segoe UI, Noto Sans SC, PingFang SC, sans-serif">
+    <text x="64" y="96" fill="#c9d1e6" font-size="18" letter-spacing="6">DEEPSEEK HARNESS · QQ BRIDGE</text>
+    <text x="64" y="178" fill="url(#ac)" font-size="66" font-weight="700">QQ ⇄ DSH</text>
+    <text x="66" y="226" fill="#eef2ff" font-size="26" font-weight="600">qq-bridge</text>
+    <text x="66" y="266" fill="#9aa5c4" font-size="18">QQ messages in. Agent replies out.</text>
+  </g>
+  <rect x="930" y="240" width="206" height="40" rx="20" fill="none" stroke="url(#ac)" stroke-width="1.5"/>
+  <text x="1033" y="266" text-anchor="middle" fill="#e9d5ff" font-family="Segoe UI, Noto Sans SC, sans-serif" font-size="15" letter-spacing="2">ONE BOT · ONE WORLD</text>
+</svg>

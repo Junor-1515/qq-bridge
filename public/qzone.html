@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QQ 空间说说设置</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f6f6f8; --card:#fff; --text:#1c1c1e; --muted:#6b6b73; --line:#e3e3e8; --accent:#ddaacc; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --card:#222226; --text:#f2f2f5; --muted:#9a9aa3; --line:#33333a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:22px 16px 60px; background:var(--bg); color:var(--text); font:14px/1.6 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  main { max-width:820px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:18px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  h2 { font-size:14px; margin:0 0 12px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+  .row { display:flex; gap:12px; align-items:center; padding:7px 0; flex-wrap:wrap; }
+  .row > label { flex:0 0 190px; color:var(--muted); font-size:13px; }
+  input[type=text], input[type=number], select, textarea { flex:1 1 220px; min-width:0; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text); font:inherit; }
+  textarea { min-height:78px; resize:vertical; }
+  input[type=checkbox] { width:17px; height:17px; }
+  .hint { color:var(--muted); font-size:12px; flex-basis:100%; margin-left:202px; }
+  .hint.flat { margin-left:0; }
+  button { padding:8px 16px; border-radius:9px; border:1px solid var(--line); background:var(--accent); color:#3a2433; font:inherit; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--text); font-weight:500; }
+  button:disabled { opacity:.55; cursor:default; }
+  .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #status { font-size:13px; color:var(--muted); }
+  .ok { color:#2e9e5b; } .bad { color:#d0453b; }
+  code { background:rgba(128,128,128,.15); padding:1px 5px; border-radius:4px; }
+  .post { border-top:1px dashed var(--line); padding:8px 0; font-size:13px; }
+  .post:first-child { border-top:none; }
+  .post .meta { color:var(--muted); font-size:11px; margin-bottom:2px; }
+  #preview { border:1px solid var(--line); border-radius:10px; padding:10px 12px; min-height:44px; white-space:pre-wrap; margin-top:8px; font-size:13px; }
+  #previewImg img { max-width:180px; border-radius:8px; border:1px solid var(--line); display:block; margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>QQ 空间说说设置</h1>
+  <div class="sub">内容由我按人格现写，一天发一到两次。改完点保存即生效，不用重启桥接。<span id="navLinks"></span></div>
+
+  <section>
+    <h2>总开关</h2>
+    <div class="row"><label>启用定时发说说</label><input type="checkbox" id="enabled" /></div>
+    <div class="row"><label>一天发几条</label>
+      <span style="display:flex;gap:6px;align-items:center;flex:1 1 220px">
+        <input type="number" id="dailyMin" min="0" max="12" style="width:80px" /><span>到</span>
+        <input type="number" id="dailyMax" min="0" max="12" style="width:80px" /><span>条之间随机（每天第一次判断时抽一次）</span>
+      </span>
+    </div>
+    <div class="row"><label>活跃时段</label><input type="text" id="activeHours" placeholder="09:00-23:00" style="flex:0 1 200px" /><span class="hint flat">这个时段之外不发</span></div>
+    <div class="row"><label>两条之间至少隔</label><input type="number" id="minGapMin" min="1" max="1440" style="width:90px" /><span class="hint flat">分钟（随机再多半份）</span></div>
+    <div class="row"><label>每条最多</label><input type="number" id="maxChars" min="20" max="2000" style="width:90px" /><span class="hint flat">字，超了截断</span></div>
+  <div class="row"><label>附图</label><input type="checkbox" id="imgEnabled" /><span class="hint flat">从收藏表情包里按备注挑一张合适的（挑不到就只发文字）</span></div>
+    <div class="hint" id="stateLine">状态读取中…</div>
+    <div class="actions" style="margin-top:8px"><button id="saveBasic">保存设置</button><span id="status"></span></div>
+  </section>
+
+  <section>
+    <h2>发什么</h2>
+    <div class="row" style="align-items:flex-start"><label>额外要求（可空）</label><textarea id="persona" placeholder="留空就用默认：25 时的日常小事、做衣服剪片子的进度、打工碎事、猫舌翻车……"></textarea></div>
+    <div class="hint">默认已经在按人设写（短、口语、不写标题、不堆 emoji、不总结升华）。这里只是额外加料，比如「最近多提绘名」。它会拼在内置提示词前面。</div>
+  </section>
+
+  <section>
+    <h2>手动发一条</h2>
+    <div class="row"><label>这次的方向（可空）</label><input type="text" id="hint" placeholder="例：说说昨天剪片子剪到几点" /></div>
+    <div class="actions" style="margin-top:4px">
+      <button id="genBtn" class="ghost">先写一条看看</button>
+      <button id="postBtn">发送到 QQ 空间</button>
+      <span id="postState" class="hint flat"></span>
+    </div>
+    <div id="preview">（这里会显示要发的内容；直接点「发送」就是现场写一条再发）</div>
+  <div id="previewImg" class="hint flat" style="margin-top:6px"></div>
+    <div class="hint">手动发送不看时段、不占当天额度，但会记进历史。发送需要浏览器登录过 QQ 空间的那份 cookie。</div>
+  </section>
+
+  <section>
+    <h2>回复评论</h2>
+    <div class="hint" style="margin-bottom:8px">说说下面有人评论时，隔一阵去看看，按人格接一句。同一串对话有轮数上限，回满了就不再接。</div>
+    <div class="row"><label>自动回评论</label><input type="checkbox" id="rEnabled" /></div>
+    <div class="row"><label>同一串最多回</label><input type="number" id="rMaxRounds" min="0" max="20" style="width:80px" /><span class="hint flat">句（0 = 不回；回满之后对方再说话也不接）</span></div>
+    <div class="row"><label>每天最多回</label><input type="number" id="rMaxPerDay" min="0" max="200" style="width:80px" /><span class="hint flat">条</span></div>
+    <div class="row"><label>每隔</label><input type="number" id="rEveryMin" min="1" max="180" style="width:80px" /><span class="hint flat">分钟看一次（只在活跃时段里看）</span></div>
+    <div class="row"><label>每条最多</label><input type="number" id="rMaxChars" min="10" max="1000" style="width:80px" /><span class="hint flat">字</span></div>
+    <div class="actions" style="margin-top:8px"><button id="saveReply">保存回复设置</button><span id="replyStateLine" class="hint flat"></span></div>
+    <div class="actions" style="margin-top:8px">
+      <button id="rCheckBtn" class="ghost">看看有没有新评论</button>
+      <button id="rRunBtn" class="ghost">现在回一轮</button>
+      <span id="rState" class="hint flat"></span>
+    </div>
+    <div id="rList" class="hint flat"></div>
+  </section>
+
+  <section>
+    <h2>登录态（cookie）</h2>
+    <div class="row" style="align-items:flex-start"><label>cookie</label><textarea id="cookie" placeholder="uin=o0...; skey=...; p_skey=...; 其它字段越多越好"></textarea></div>
+    <div class="row"><label>或者从文件读</label><input type="text" id="cookieFile" placeholder="相对 qq-bridge 的路径，例：state/qzone-cookie.txt" /></div>
+    <div class="hint">拿法：浏览器登录 <code>user.qzone.qq.com</code>，F12 → Application/存储 → Cookies，把那一整行复制过来（至少要 uin 和 skey / p_skey）。登录态会过期，发失败报「未登录」就回来换一次。</div>
+    <div class="row"><label>登录检测</label><button id="authBtn" class="ghost">立即检测</button><span id="authState" class="hint" style="margin-left:8px"></span></div>
+    <div class="hint">每 30 分钟自动探一次；掉线会发一条 QQ 消息提醒（同一状态 6 小时内只提醒一次，可在配置文件里关掉或改目标）。</div>
+  </section>
+
+  <section>
+    <h2>写作接口</h2>
+    <div class="row"><label>允许现写</label><input type="checkbox" id="wEnabled" /></div>
+    <div class="row"><label>接口地址</label><input type="text" id="wBaseUrl" placeholder="https://api.deepseek.com/v1" /></div>
+    <div class="row"><label>模型</label><input type="text" id="wModel" placeholder="deepseek-flash" /></div>
+    <div class="row"><label>密钥环境变量名</label><input type="text" id="wApiKeyEnv" placeholder="JSNU_API_KEY" /></div>
+    <div class="row"><label>密钥文件</label><input type="text" id="wApiKeyFile" placeholder="C:\\Users\\你\\.dsh\\.credentials.yaml" /></div>
+    <div class="row"><label>密钥行正则</label><input type="text" id="wApiKeyLine" placeholder="^\\s*token:\\s*(\\S+)" /></div>
+    <div class="row"><label>认证头</label><input type="text" id="wAuthHeader" placeholder="x-dsh-auth-token" style="flex:0 1 220px" /><input type="text" id="wAuthPrefix" placeholder="前缀，例 Bearer （默认空）" style="flex:0 1 200px" /></div>
+    <div class="row"><label>推理档</label><select id="wReasoning" style="flex:0 1 200px">
+      <option value="">不指定</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="off">off</option>
+    </select><span class="hint flat">有的网关不认 off，报 400 就换 low</span></div>
+    <div class="row"><label>temperature / max_tokens</label>
+      <input type="number" id="wTemp" min="0" max="2" step="0.05" style="width:100px" />
+      <input type="number" id="wMaxTokens" min="64" max="8000" step="100" style="width:120px" />
+    </div>
+    <div class="actions" style="margin-top:8px"><button id="saveWriter">保存写作设置</button><span id="writerState" class="hint flat"></span></div>
+    <div class="hint">任何 OpenAI 兼容的 <code>/chat/completions</code> 都能用。密钥留空就按「环境变量 → 密钥文件 → ~/.dsh/.credentials.yaml」的顺序找。</div>
+  </section>
+
+  <section>
+    <h2>最近记录</h2>
+    <div id="recent" class="hint flat">读取中…</div>
+  </section>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const token = params.get('token') || '';
+let S = null;
+let last = '';
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]; }); }
+async function api(p, opt) {
+  opt = opt || {};
+  const u = p + (p.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
+  const res = await fetch(u, Object.assign({ headers: { 'content-type': 'application/json', 'x-console-token': token } }, opt));
+  const txt = await res.text();
+  try { return JSON.parse(txt); } catch (e) { return { ok: false, error: txt.slice(0, 200) }; }
+}
+function setStatus(t, bad) { const el = $('status'); el.textContent = t; el.className = bad ? 'bad' : 'ok'; }
+function pad(n) { return String(n).padStart(2, '0'); }
+function when(ts) {
+  if (!ts) return '—';
+  const d = new Date(Number(ts));
+  if (!Number.isFinite(d.getTime())) return '—';
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  return (sameDay ? '' : (d.getMonth() + 1) + '/' + d.getDate() + ' ') + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+async function checkAuth() {
+  const btn = $('authBtn');
+  btn.disabled = true;
+  $('authState').textContent = '检测中…';
+  try {
+    const res = await api('/api/qzone/auth-check', { method: 'POST', body: '{}' });
+    const au = res.auth || {};
+    $('authState').innerHTML = au.ok ? '<span class="ok">登录态正常</span>' : '<span class="bad">' + esc(au.message || au.code || '失效') + '</span>';
+  } catch (error) {
+    $('authState').innerHTML = '<span class="bad">检测失败：' + esc(error.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function load() {
+  const data = await api('/api/qzone/settings');
+  if (!data.ok) { setStatus('读取失败：' + (data.error || ''), true); return; }
+  S = data.settings;
+  const st = data.status || {};
+  $('enabled').checked = S.enabled === true;
+  $('dailyMin').value = S.dailyMin;
+  $('dailyMax').value = S.dailyMax;
+  $('activeHours').value = S.activeHours;
+  $('minGapMin').value = Math.round((S.minGapMs || 0) / 60000);
+  $('maxChars').value = S.maxChars;
+  $('imgEnabled').checked = !(S.image && S.image.enabled === false);
+  const R = S.reply || {};
+  $('rEnabled').checked = R.enabled !== false;
+  $('rMaxRounds').value = R.maxRounds == null ? 2 : R.maxRounds;
+  $('rMaxPerDay').value = R.maxPerDay == null ? 10 : R.maxPerDay;
+  $('rEveryMin').value = R.checkEveryMin == null ? 10 : R.checkEveryMin;
+  $('rMaxChars').value = R.maxChars == null ? 120 : R.maxChars;
+  {
+    const rep = st.reply || {};
+    const bits2 = [];
+    bits2.push(rep.enabled ? '自动回复开着' : '自动回复关着');
+    bits2.push('今天回了 ' + (rep.today || 0) + '/' + (rep.maxPerDay || 0) + ' 条');
+    bits2.push('上次检查 ' + when(rep.lastCheck));
+    if (rep.lastReply && rep.lastReply.text) bits2.push('上一条回的是「' + esc(String(rep.lastReply.name || '')) + '」：' + esc(String(rep.lastReply.text).slice(0, 30)));
+    if (rep.lastError) bits2.push('<span class="bad">上次失败：' + esc(rep.lastError) + '</span>');
+    $('replyStateLine').innerHTML = bits2.join(' ｜ ');
+  }
+  $('persona').value = S.persona || '';
+  $('cookie').value = S.cookie || '';
+  $('cookieFile').value = S.cookieFile || '';
+  $('wEnabled').checked = S.writer.enabled !== false;
+  $('wBaseUrl').value = S.writer.baseUrl;
+  $('wModel').value = S.writer.model;
+  $('wApiKeyEnv').value = S.writer.apiKeyEnv;
+  $('wApiKeyFile').value = S.writer.apiKeyFile;
+  $('wApiKeyLine').value = S.writer.apiKeyLine;
+  $('wAuthHeader').value = S.writer.authHeader;
+  $('wAuthPrefix').value = S.writer.authPrefix;
+  $('wReasoning').value = S.writer.reasoningEffort || '';
+  $('wTemp').value = S.writer.temperature;
+  $('wMaxTokens').value = S.writer.maxTokens;
+
+  const rt = st.runtime || {};
+  const bits = [];
+  bits.push(st.cookieReady ? '<span class="ok">cookie 已就绪</span>' : '<span class="bad">cookie 还没配</span>');
+  const au = data.auth || {};
+  if (au.checkedAt) bits.push(au.ok ? '<span class="ok">登录态正常</span>' : '<span class="bad">登录态失效：' + esc(au.message || au.code || '') + '</span>');
+  bits.push(st.writerKeyReady ? '<span class="ok">写作密钥已找到</span>' : '<span class="bad">写作密钥没找到</span>');
+  bits.push('今天已发 ' + (st.todayPosted || 0) + ' 条');
+  if (rt.target) bits.push('当天目标 ' + rt.target + ' 条（已发 ' + (rt.count || 0) + '）');
+  bits.push('上次 ' + when(rt.lastAt) + ' · 下次预计 ' + when(rt.nextAt));
+  if (rt.lastError) bits.push('<span class="bad">上次失败：' + esc(rt.lastError) + '</span>');
+  $('stateLine').innerHTML = bits.join(' ｜ ');
+
+  $('authState').innerHTML = au.checkedAt
+    ? (when(au.checkedAt) + ' 检测：' + (au.ok ? '<span class="ok">正常</span>' : '<span class="bad">' + esc(au.message || au.code || '失效') + '</span>'))
+    : '还没检测过';
+
+  const recent = st.recent || [];
+  $('recent').innerHTML = recent.length ? recent.map(function (p) {
+    return '<div class="post"><div class="meta">' + when(p.at) + ' · ' + (p.ok === false ? '<span class="bad">失败</span>' : '已发') + (p.generated ? ' · 自动写' : '') + '</div>' + esc(p.text || '') + (p.ok === false && p.error ? '<div class="meta bad">' + esc(p.error) + '</div>' : '') + '</div>';
+  }).join('') : '还没发过。';
+}
+
+function basicPayload() {
+  return {
+    enabled: $('enabled').checked,
+    dailyMin: Number($('dailyMin').value),
+    dailyMax: Number($('dailyMax').value),
+    activeHours: $('activeHours').value.trim(),
+    minGapMs: Math.max(1, Number($('minGapMin').value) || 60) * 60000,
+    maxChars: Number($('maxChars').value),
+    persona: $('persona').value.trim(),
+    cookie: $('cookie').value.trim(),
+    cookieFile: $('cookieFile').value.trim(),
+    image: { enabled: $('imgEnabled').checked }
+  };
+}
+function showSticker(st) {
+  const box = $('previewImg');
+  if (!st || !st.url) { box.innerHTML = ''; return; }
+  box.innerHTML = '配图：' + esc(st.desc || '表情包') + '<img src="' + esc(st.url) + '" alt="" />';
+}
+function writerPayload() {
+  return {
+    writer: {
+      enabled: $('wEnabled').checked,
+      baseUrl: $('wBaseUrl').value.trim(),
+      model: $('wModel').value.trim(),
+      apiKeyEnv: $('wApiKeyEnv').value.trim(),
+      apiKeyFile: $('wApiKeyFile').value.trim(),
+      apiKeyLine: $('wApiKeyLine').value.trim(),
+      authHeader: $('wAuthHeader').value.trim(),
+      authPrefix: $('wAuthPrefix').value,
+      reasoningEffort: $('wReasoning').value,
+      temperature: Number($('wTemp').value),
+      maxTokens: Number($('wMaxTokens').value)
+    }
+  };
+}
+async function save(patch, lineEl, okMsg) {
+  setStatus('保存中…');
+  const res = await api('/api/qzone/settings', { method: 'POST', body: JSON.stringify({ settings: patch }) });
+  if (!res.ok) {
+    setStatus('保存失败：' + (res.error || ''), true);
+    if (lineEl) lineEl.textContent = '保存失败';
+    return res;
+  }
+  setStatus(okMsg || '已保存');
+  await load();
+  return res;
+}
+
+$('saveBasic').onclick = function () { save(basicPayload(), null, '设置已保存'); };
+$('saveReply').onclick = function () {
+  save({ reply: {
+    enabled: $('rEnabled').checked,
+    maxRounds: Number($('rMaxRounds').value),
+    maxPerDay: Number($('rMaxPerDay').value),
+    checkEveryMin: Number($('rEveryMin').value),
+    maxChars: Number($('rMaxChars').value)
+  } }, $('replyStateLine'), '回复设置已保存');
+};
+function renderReplyList(items) {
+  if (!items || !items.length) { $('rList').innerHTML = '现在没有待回复的评论。'; return; }
+  $('rList').innerHTML = items.map(function (it) {
+    return '<div class="post"><div class="meta">「' + esc(it.name) + '」第 ' + (it.rounds + 1) + ' 句 · 说说是：' + esc(it.post || '') + '</div>' + esc(it.comment) + '</div>';
+  }).join('');
+}
+$('rCheckBtn').onclick = async function () {
+  $('rState').textContent = '查看中…';
+  const res = await api('/api/qzone/comments', { method: 'POST', body: '{}' });
+  if (!res.ok) { $('rState').textContent = '失败：' + (res.error || ''); $('rList').innerHTML = ''; return; }
+  renderReplyList(res.items);
+  $('rState').textContent = res.items.length ? ('有 ' + res.items.length + ' 条待回') : '没有待回的';
+};
+$('rRunBtn').onclick = async function () {
+  if (!confirm('现在就去看一遍评论、该回的立刻回？')) return;
+  $('rRunBtn').disabled = true;
+  $('rState').textContent = '在回…';
+  const res = await api('/api/qzone/reply-tick', { method: 'POST', body: '{}' });
+  $('rRunBtn').disabled = false;
+  if (!res.ok) { $('rState').textContent = '失败：' + (res.error || ''); return; }
+  const lines = (res.replied || []).map(function (x) { return '<div class="post"><div class="meta">回了「' + esc(x.name) + '」</div>' + esc(x.reply) + '</div>'; });
+  $('rList').innerHTML = lines.length ? lines.join('') : '这一轮没有需要回的。';
+  $('rState').textContent = '回完 ' + (res.replied || []).length + ' 条';
+  await load();
+};
+$('saveWriter').onclick = function () {
+  save(writerPayload(), $('writerState'), '写作设置已保存').then(function (r) {
+    $('writerState').textContent = r && r.ok ? '已保存' : '保存失败';
+  });
+};
+
+$('genBtn').onclick = async function () {
+  $('postState').textContent = '正在写…';
+  $('genBtn').disabled = true;
+  const res = await api('/api/qzone/preview', { method: 'POST', body: JSON.stringify({ hint: $('hint').value.trim() }) });
+  $('genBtn').disabled = false;
+  if (!res.ok) { $('postState').textContent = '失败：' + (res.error || ''); return; }
+  last = res.text;
+  $('preview').textContent = res.text;
+  showSticker(res.sticker);
+  $('postState').textContent = '写好了（' + res.text.length + ' 字' + (res.sticker ? '，配一张表情' : '，没配图') + '），确认没问题再点发送';
+};
+
+$('postBtn').onclick = async function () {
+  const typed = ($('preview').textContent || '').trim();
+  const useTyped = last && typed === last;
+  if (!confirm(useTyped ? '把预览里这条发到 QQ 空间？' : '现场写一条并直接发到 QQ 空间？')) return;
+  $('postBtn').disabled = true;
+  $('postState').textContent = useTyped ? '发送中…' : '写并发送中…';
+  const payload = useTyped ? { text: last } : { hint: $('hint').value.trim() };
+  const res = await api('/api/qzone/post', { method: 'POST', body: JSON.stringify(payload) });
+  $('postBtn').disabled = false;
+  if (!res.ok) { $('postState').textContent = '发送失败：' + (res.error || ''); return; }
+  last = '';
+  $('preview').textContent = res.text;
+  showSticker(res.sticker);
+  $('postState').textContent = '已发出去（' + res.text.length + ' 字' + (res.image ? '，带图' : '') + '）';
+  await load();
+};
+
+$('navLinks').innerHTML = ' · <a href="/bili?token=' + encodeURIComponent(token) + '">B 站设置 ↗</a> · <a href="/tts?token=' + encodeURIComponent(token) + '">语音设置 ↗</a>';
+load();
+$('authBtn').addEventListener('click', checkAuth);
+</script>
+</body>
+</html>

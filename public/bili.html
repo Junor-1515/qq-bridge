@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>B 站分享设置</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f6f6f8; --card:#fff; --text:#1c1c1e; --muted:#6b6b73; --line:#e3e3e8; --accent:#ddaacc; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#17171a; --card:#222226; --text:#f2f2f5; --muted:#9a9aa3; --line:#33333a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:22px 16px 60px; background:var(--bg); color:var(--text); font:14px/1.6 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  main { max-width:760px; margin:0 auto; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:18px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  h2 { font-size:14px; margin:0 0 12px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+  .row { display:flex; gap:12px; align-items:center; padding:7px 0; flex-wrap:wrap; }
+  .row > label { flex:0 0 150px; color:var(--muted); font-size:13px; }
+  input[type=text], input[type=number], select, textarea { flex:1 1 220px; min-width:0; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text); font:inherit; }
+  textarea { min-height:56px; resize:vertical; }
+  input[type=checkbox] { width:17px; height:17px; }
+  .hint { color:var(--muted); font-size:12px; flex-basis:100%; margin-left:162px; }
+  button { padding:8px 16px; border-radius:9px; border:1px solid var(--line); background:var(--accent); color:#3a2433; font:inherit; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--text); font-weight:500; }
+  button:disabled { opacity:.55; cursor:default; }
+  .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #status { font-size:13px; color:var(--muted); }
+  .qr { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  .qr img { width:190px; height:190px; image-rendering:pixelated; background:#fff; border-radius:8px; padding:4px; }
+  .kw { display:inline-block; margin:3px 6px 3px 0; padding:3px 9px; border:1px solid var(--line); border-radius:999px; font-size:12px; color:var(--muted); }
+  .kw .kwText { cursor:text; }
+  .kw .kwText:hover { text-decoration:underline dotted; }
+  .kw .kwCount { margin-left:5px; color:#aaa; font-size:11px; }
+  .kw .kwDel { all:unset; cursor:pointer; margin-left:6px; color:#c0392b; font-size:13px; line-height:1; }
+  .kw .kwDel:hover { color:#e74c3c; }
+  .kw .kwEdit { width:82px; padding:1px 4px; font-size:12px; border:1px solid var(--line); border-radius:6px; background:transparent; color:inherit; font-family:inherit; }
+  .ok { color:#2e9e5b; }
+  .bad { color:#d0453b; }
+  .candList { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; margin-top:12px; }
+  .candCard { display:block; text-decoration:none; color:inherit; border:1px solid rgba(0,0,0,.1); border-radius:10px; overflow:hidden; background:#fff; }
+  .candCard img { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#f2f2f2; }
+  .candTitle { font-size:13px; line-height:1.4; padding:8px 8px 2px; }
+  .candMeta { font-size:12px; color:#888; padding:0 8px 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>B 站刷视频 / 分享设置</h1>
+  <div class="sub">保存后立即生效，不用重启桥接。直接访问 <code>/bili?token=…</code> 即可。<span id="navLinks"></span></div>
+
+  <section>
+    <h2>分享形式</h2>
+    <div class="row">
+      <label>引入语</label>
+      <input type="text" id="intro" maxlength="120" placeholder="留空则每次随机一句（例如：看我刷到了什么视频~）" />
+    </div>
+    <div class="hint">会在视频前面单独发一句；后面依次是封面图、标题、链接、BV 号。</div>
+    <div class="row"><label>写入观看历史</label><input type="checkbox" id="recordHistory" /><span class="hint" style="margin-left:0">登录 B 站账号后，分享的视频会出现在该账号的「历史记录」里</span></div>
+  </section>
+
+  <section>
+    <h2>定时自动分享</h2>
+    <div class="row"><label>启用</label><input type="checkbox" id="autoEnabled" /></div>
+    <div class="row"><label>目标会话</label><input type="text" id="autoKeys" placeholder="group:607400395, private:2492803440" /></div>
+    <div class="row"><label>最小间隔（分钟）</label><input type="number" id="autoMinInterval" min="5" max="1440" step="5" /></div>
+    <div class="row"><label>最大间隔（分钟）</label><input type="number" id="autoMaxInterval" min="5" max="1440" step="5" /></div>
+    <div class="hint">每轮结束后在最小~最大之间随机取一个，不固定节奏。</div>
+    <div class="row"><label>启动后首条延迟（分钟）</label><input type="number" id="autoFirstDelay" min="1" max="1440" step="1" /></div>
+    <div class="row">
+      <label>取视频来源</label>
+      <select id="autoMode">
+        <option value="hot">热门</option>
+        <option value="recommend">推荐流（需登录）</option>
+        <option value="interest">按你的喜好搜索</option>
+        <option value="ranking">排行榜</option>
+        <option value="mixed">并行混合（推荐+喜好为主）</option>
+      </select>
+    </div>
+    <div class="row" id="mixRow" style="display:none">
+      <label>混合权重</label>
+      <span style="display:flex;gap:6px;align-items:center;flex:1 1 260px;flex-wrap:wrap">
+        推荐 <input type="number" id="wRecommend" min="0" max="100" step="5" style="width:64px" />
+        喜好 <input type="number" id="wInterest" min="0" max="100" step="5" style="width:64px" />
+        热门 <input type="number" id="wHot" min="0" max="100" step="5" style="width:64px" />
+        排行 <input type="number" id="wRanking" min="0" max="100" step="5" style="width:64px" />
+      </span>
+    </div>
+    <div class="hint">并行混合会同时从这几路取视频，按上面的相对权重配比后再打乱挑一条；0 表示这一路不参与。</div>
+    <div class="row"><label>每天最多几条</label><input type="number" id="autoMaxPerDay" min="0" max="50" step="1" /><span class="hint" style="margin-left:0">0 = 不限制；今天已发 <b id="todayShared">0</b> 条</span></div>
+    <div class="row"><label>去重时长（小时）</label><input type="number" id="autoDedupe" min="1" max="8760" step="1" /></div>
+    <div class="hint">这段时间内推过的视频不会再推：BV 号相同算重复，标题一字不差（换号搬运）也算。同类、同系列、同一个 UP 的其它视频不算重复，照常推。最长 8760 小时（一年），想基本不重复就填大一点。</div>
+    <div class="row"><label>新鲜度加权</label><input type="checkbox" id="freshEnabled" /></div>
+    <div class="row"><label>只推这么多天内的</label><input type="number" id="freshMaxAge" min="0" max="3650" step="1" /><span class="hint" style="margin-left:0">天，0 = 不限年代</span></div>
+    <div class="row"><label>半衰期（天）</label><input type="number" id="freshHalfLife" min="1" max="3650" step="1" /></div>
+    <div class="row"><label>老视频最低权重</label><input type="number" id="freshFloor" min="0.001" max="1" step="0.01" /></div>
+    <div class="hint">被挑中的概率按 0.5^(视频天数 ÷ 半衰期) 衰减：半衰期 90 天时，三个月前的视频只有新视频的一半机会，一年前的约 1/16，但不会归零（最低到「老视频最低权重」）。权重越高越偏新。</div>
+    <div class="row">
+      <label>活跃时段</label>
+      <span style="display:flex;gap:6px;align-items:center;flex:1 1 220px">
+        <input type="number" id="activeStart" min="0" max="23" step="1" style="width:76px" />
+        <span>点到</span>
+        <input type="number" id="activeEnd" min="0" max="23" step="1" style="width:76px" />
+        <span>点</span>
+      </span>
+    </div>
+    <div class="hint">只在这个时间段里自动分享（支持跨零点，比如 20 点到 2 点）；起止相同 = 不限时段。</div>
+    <div class="row"><label>自动分享引入语</label><input type="text" id="autoIntro" maxlength="120" placeholder="留空则按视频内容自动生成一句" /></div>
+    <div class="hint">自动分享会先说这一句，再接封面 + 标题/链接/BV；留空时代码会用视频标题/标签拼一句相关的。</div>
+    <div class="actions">
+      <button id="runBtn" class="ghost">现在分享一条</button>
+      <span id="runState" class="hint" style="margin-left:0"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>最近分享</h2>
+    <div id="recent" class="hint" style="margin-left:0">读取中…</div>
+  </section>
+
+  <section>
+    <h2>候选预览</h2>
+    <div class="row">
+      <label>来源</label>
+      <select id="candMode">
+        <option value="mixed">混合（喜好+推荐+热门+排行）</option>
+        <option value="recommend">推荐流</option>
+        <option value="interest">按喜好搜</option>
+        <option value="hot">热门</option>
+        <option value="ranking">排行榜</option>
+      </select>
+    </div>
+    <div class="row"><label>关键词</label><input id="candQuery" placeholder="留空就按上面的来源取" style="flex:1 1 220px" /></div>
+    <div class="row"><label>数量</label><input type="number" id="candLimit" min="1" max="24" value="8" style="width:90px" /></div>
+    <div class="actions">
+      <button id="candBtn" class="ghost">看看候选</button>
+      <span id="candState" class="hint" style="margin-left:0"></span>
+    </div>
+    <div id="candList" class="candList"></div>
+    <div class="hint">只在这个面板里看：不发给模型、也不发到群里。想发就点上面的「现在分享一条」，或在群里让它发。</div>
+  </section>
+
+  <section>
+    <h2>上下文智能推送</h2>
+    <div class="row"><label>启用</label><input type="checkbox" id="ctxEnabled" /></div>
+    <div class="row"><label>命中信号时的试推概率</label><input type="number" id="ctxProb" min="0" max="1" step="0.05" style="width:90px" /></div>
+    <div class="row"><label>最短间隔（秒）</label><input type="number" id="ctxGap" min="30" max="3600" step="10" style="width:110px" /></div>
+    <div class="hint">你聊天里提到疑问/想找的东西时，它会在后台搜一条相关视频，把候选塞进下一次唤醒的提示里，由它自己判断该不该推、引入怎么写；同一话题 24 小时内提得越多，提示里越强调「值得推」。</div>
+  </section>
+
+  <section>
+    <h2>喜好推荐</h2>
+    <div class="row"><label>启用兴趣模式</label><input type="checkbox" id="interestEnabled" /></div>
+    <div class="row"><label>最多记几个词</label><input type="number" id="interestMax" min="1" max="20" step="1" /></div>
+    <div class="row"><label>推荐时随机取几个词条</label><input type="number" id="interestPick" min="1" max="10" step="1" /></div>
+    <div class="row"><label>已记录的喜好</label><div id="keywords" style="flex:1 1 220px"></div></div>
+    <div class="row"><label>手动加一个</label><input id="kwNew" placeholder="输关键词，回车或点「添加」" style="flex:1 1 220px" /><button id="kwAdd" class="ghost">添加</button></div>
+    <div class="hint">词条要短，像 B 站标签——几个字就够（默认最多 10 个字，可在 config 的 bili.interest.maxLen 调）。一次搜索词太长会拆成几条再记，整句不会被存进来。点词本身改名、点 × 删掉，改动立刻生效，不用点下面的「保存设置」。</div>
+  </section>
+
+  <section>
+    <h2>匹配方式</h2>
+    <div class="row"><label>标签权重</label><input type="number" id="tagWeight" min="0" max="5" step="0.5" /></div>
+    <div class="row"><label>标题权重</label><input type="number" id="titleWeight" min="0" max="5" step="0.5" /></div>
+    <div class="row"><label>每个关键词补多少个标签</label><input type="number" id="tagFetchLimit" min="0" max="20" step="1" /></div>
+    <div class="hint">搜索结果会按「标题命中 + 标签命中」重新排序；标签权重越高，靠标签对上的冷门视频越容易排到前面。标签权重填 0 就完全按 B 站原顺序。</div>
+  </section>
+
+  <section>
+    <h2>B 站账号（可选）</h2>
+    <div class="row"><label>当前状态</label><div id="loginState">读取中…</div></div>
+    <div class="actions">
+      <button id="loginBtn" class="ghost">扫码登录</button>
+      <button id="logoutBtn" class="ghost">退出登录</button>
+    </div>
+    <div class="qr" id="qrBox" style="display:none;margin-top:12px">
+      <img id="qrImg" alt="B 站登录二维码" />
+      <div>
+        <div id="qrState">用 B 站 App 扫码</div>
+        <div class="hint" style="margin-left:0">登录后自动分享可以刷你自己的推荐流；不登录也能用热门/搜索。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>限流（防额度被吃光）</h2>
+    <div class="row"><label>请求最小间隔（ms）</label><input type="number" id="reqInterval" min="200" max="20000" step="100" /></div>
+    <div class="row"><label>突发额度</label><input type="number" id="burst" min="1" max="20" step="1" /></div>
+    <div class="row"><label>单次超时（ms）</label><input type="number" id="timeout" min="3000" max="60000" step="1000" /></div>
+  </section>
+
+  <div class="actions">
+    <button id="saveBtn">保存设置</button>
+    <button id="reloadBtn" class="ghost">重新读取</button>
+    <span id="status"></span>
+  </div>
+</main>
+<script>
+  const params = new URLSearchParams(location.search);
+  const token = params.get('token') || '';
+  document.getElementById('navLinks').innerHTML = ' · <a href="/tts?token=' + encodeURIComponent(token) + '">语音设置 ↗</a> · <a href="/qzone?token=' + encodeURIComponent(token) + '">QQ 空间 ↗</a> · <a href="/music?token=' + encodeURIComponent(token) + '">音乐设置 ↗</a>';
+  const api = async (path, options = {}) => {
+    const url = path + (path.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+    const res = await fetch(url, { headers: { 'content-type': 'application/json' }, ...options });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || body.ok === false) throw new Error(body.error || ('HTTP ' + res.status));
+    return body;
+  };
+  const $ = (id) => document.getElementById(id);
+  const setStatus = (text, cls = '') => { $('status').textContent = text; $('status').className = cls; };
+
+  let qrcodeKey = '';
+  let qrTimer = null;
+
+  function fill(settings, login) {
+    $('intro').value = settings.intro || '';
+    $('recordHistory').checked = settings.recordHistory !== false;
+    const a = settings.autoShare || {};
+    $('autoEnabled').checked = a.enabled === true;
+    $('autoKeys').value = Array.isArray(a.keys) ? a.keys.join(', ') : '';
+    $('autoMinInterval').value = a.minIntervalMinutes ?? 90;
+    $('autoMaxInterval').value = a.maxIntervalMinutes ?? 180;
+    $('autoFirstDelay').value = a.firstDelayMinutes ?? 10;
+    $('autoMode').value = a.mode || 'hot';
+    $('mixRow').style.display = (a.mode === 'mixed') ? 'flex' : 'none';
+    const mw = settings.mixWeights || {};
+    $('wRecommend').value = mw.recommend ?? 35;
+    $('wInterest').value = mw.interest ?? 35;
+    $('wHot').value = mw.hot ?? 20;
+    $('wRanking').value = mw.ranking ?? 10;
+    const cp = settings.contextPush || {};
+    $('ctxEnabled').checked = cp.enabled !== false;
+    $('ctxProb').value = cp.probability ?? 0.5;
+    $('ctxGap').value = Math.round((Number(cp.minGapMs) || 180000) / 1000);
+    const rel = settings.relevance || {};
+    $('tagWeight').value = rel.tagWeight ?? 2;
+    $('titleWeight').value = rel.titleWeight ?? 1;
+    $('tagFetchLimit').value = rel.tagFetchLimit ?? 8;
+    $('autoMaxPerDay').value = a.maxPerDay ?? 0;
+    $('autoDedupe').value = a.dedupeHours ?? 168;
+    const fr = a.freshness || {};
+    $('freshEnabled').checked = fr.enabled !== false;
+    $('freshMaxAge').value = fr.maxAgeDays ?? 365;
+    $('freshHalfLife').value = fr.halfLifeDays ?? 90;
+    $('freshFloor').value = fr.floor ?? 0.05;
+    $('activeStart').value = a.activeHours?.start ?? 9;
+    $('activeEnd').value = a.activeHours?.end ?? 23;
+    $('autoIntro').value = a.intro || '';
+    const it = settings.interest || {};
+    $('interestEnabled').checked = it.enabled !== false;
+    $('interestMax').value = it.maxKeywords ?? 5;
+  $('interestPick').value = it.pickCount ?? 3;
+    $('todayShared').textContent = it.todayShared ?? 0;
+    applyInterest(it);
+    $('reqInterval').value = settings.requestIntervalMs ?? 400;
+    $('burst').value = settings.burst ?? 4;
+    $('timeout').value = settings.timeoutMs ?? 20000;
+    renderRecent(settings.recentShares || []);
+    renderLogin(login || {});
+  }
+
+  let kwList = [];
+  let kwMax = 16;
+
+  function esc(s) {
+    return String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  }
+
+  function applyInterest(it) {
+    kwMax = Number(it?.maxKeywords) || 16;
+    kwList = Array.isArray(it?.items)
+      ? it.items.map((k) => ({ kw: String(k.kw ?? ''), count: Number(k.count) || 0, lastAt: Number(k.lastAt) || 0 }))
+      : (it?.keywords || []).map((kw) => ({ kw: String(kw ?? ''), count: 1, lastAt: 0 }));
+    renderKeywords();
+  }
+
+  function renderKeywords() {
+    const box = $('keywords');
+    if (!kwList.length) {
+      box.innerHTML = '<span class="hint" style="margin-left:0">还没记录。也可以直接在下面加，不用等它搜过</span>';
+      return;
+    }
+    box.innerHTML = kwList.map((k, i) => (
+      '<span class="kw" data-i="' + i + '">'
+      + '<span class="kwText" title="点一下改名">' + esc(k.kw) + '</span>'
+      + (k.count > 1 ? '<span class="kwCount">×' + k.count + '</span>' : '')
+      + '<button class="kwDel" data-del="' + i + '" title="删掉">×</button>'
+      + '</span>'
+    )).join('');
+  }
+
+  async function saveKeywords() {
+    setStatus('保存喜好…');
+    try {
+      const body = await api('/api/bili/settings', { method: 'POST', body: JSON.stringify({ interest: { keywords: kwList.map((k) => k.kw) } }) });
+      applyInterest(body.settings?.interest);
+      setStatus('喜好已更新', 'ok');
+    } catch (error) {
+      setStatus('保存喜好失败：' + error.message, 'bad');
+    }
+  }
+
+  function editKeyword(chip) {
+    const i = Number(chip.dataset.i);
+    if (!kwList[i]) return;
+    const input = document.createElement('input');
+    input.className = 'kwEdit';
+    input.value = kwList[i].kw;
+    chip.textContent = '';
+    chip.appendChild(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = (commit) => {
+      if (done) return;
+      done = true;
+      const v = input.value.trim();
+      if (!commit || !v || v === kwList[i].kw) { renderKeywords(); return; }
+      if (v.length > 40) { setStatus('词条太长了，写几个字就行', 'bad'); renderKeywords(); return; }
+      if (kwList.some((k, j) => j !== i && k.kw === v)) { setStatus('这个词已经有了', 'bad'); renderKeywords(); return; }
+      kwList[i] = { ...kwList[i], kw: v };
+      void saveKeywords();
+    };
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); finish(true); }
+      else if (event.key === 'Escape') { event.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', () => finish(true));
+  }
+
+  function addKeyword() {
+    const v = $('kwNew').value.trim();
+    if (!v) return;
+    if (v.length > 40) { setStatus('关键词最多 40 个字', 'bad'); return; }
+    if (kwList.some((k) => k.kw === v)) { setStatus('这个词已经有了', 'bad'); return; }
+    if (kwList.length >= kwMax) { setStatus('最多记 ' + kwMax + ' 个词，先删一个或者把上面的上限调大', 'bad'); return; }
+    kwList.push({ kw: v, count: 1, lastAt: Date.now() });
+    $('kwNew').value = '';
+    void saveKeywords();
+  }
+
+  $('keywords').addEventListener('click', (event) => {
+    const del = event.target.closest('[data-del]');
+    if (del) {
+      kwList.splice(Number(del.dataset.del), 1);
+      void saveKeywords();
+      return;
+    }
+    const chip = event.target.closest('.kw');
+    if (chip) editKeyword(chip);
+  });
+  $('kwAdd').addEventListener('click', addKeyword);
+  $('kwNew').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); addKeyword(); }
+  });
+
+  function renderRecent(list) {
+    const box = $('recent');
+    if (!list.length) {
+      box.textContent = '还没分享过视频';
+      return;
+    }
+    box.innerHTML = list.map((item) => {
+      const when = item.at ? new Date(item.at).toLocaleString('zh-CN', { hour12: false }) : '';
+      const title = String(item.title || item.bvid || '').replace(/[<>&]/g, '');
+      return '<div style="padding:2px 0">' + when + ' · ' + title + '</div>';
+    }).join('');
+  }
+
+  function renderLogin(login) {
+    if (login.loggedIn) {
+      $('loginState').innerHTML = '<span class="ok">已登录</span> ' + (login.name || '') + (login.mid ? '（UID ' + login.mid + '）' : '');
+    } else if (login.stale) {
+      $('loginState').innerHTML = '<span class="bad">登录已失效</span>，重新扫码即可';
+    } else {
+      $('loginState').textContent = '未登录（热门/搜索仍可用）';
+    }
+  }
+
+  async function load() {
+    setStatus('读取中…');
+    try {
+      const body = await api('/api/bili/settings');
+      fill(body.settings, body.login);
+      setStatus('已读取', 'ok');
+    } catch (error) {
+      setStatus('读取失败：' + error.message, 'bad');
+    }
+  }
+
+  async function save() {
+    setStatus('保存中…');
+    const payload = {
+      intro: $('intro').value,
+      recordHistory: $('recordHistory').checked,
+      requestIntervalMs: Number($('reqInterval').value),
+      burst: Number($('burst').value),
+      timeoutMs: Number($('timeout').value),
+      autoShare: {
+        enabled: $('autoEnabled').checked,
+        keys: $('autoKeys').value,
+        minIntervalMinutes: Number($('autoMinInterval').value),
+        maxIntervalMinutes: Number($('autoMaxInterval').value),
+        firstDelayMinutes: Number($('autoFirstDelay').value),
+        mode: $('autoMode').value,
+        maxPerDay: Number($('autoMaxPerDay').value),
+        dedupeHours: Number($('autoDedupe').value),
+        freshness: {
+          enabled: $('freshEnabled').checked,
+          maxAgeDays: Number($('freshMaxAge').value),
+          halfLifeDays: Number($('freshHalfLife').value),
+          floor: Number($('freshFloor').value),
+        },
+        activeHours: { start: Number($('activeStart').value), end: Number($('activeEnd').value) },
+        intro: $('autoIntro').value
+      },
+      interest: {
+        enabled: $('interestEnabled').checked,
+        maxKeywords: Number($('interestMax').value),
+      pickCount: Number($('interestPick').value)
+      },
+      mixWeights: {
+        recommend: Number($('wRecommend').value),
+        interest: Number($('wInterest').value),
+        hot: Number($('wHot').value),
+        ranking: Number($('wRanking').value)
+      },
+      contextPush: {
+        enabled: $('ctxEnabled').checked,
+        probability: Number($('ctxProb').value),
+        minGapMs: Number($('ctxGap').value) * 1000
+      },
+      relevance: {
+        tagWeight: Number($('tagWeight').value),
+        titleWeight: Number($('titleWeight').value),
+        tagFetchLimit: Number($('tagFetchLimit').value)
+      }
+    };
+    try {
+      await api('/api/bili/settings', { method: 'POST', body: JSON.stringify(payload) });
+      setStatus('已保存，立即生效', 'ok');
+      await load();
+    } catch (error) {
+      setStatus('保存失败：' + error.message, 'bad');
+    }
+  }
+
+  async function startLogin() {
+    setStatus('生成二维码…');
+    $('qrBox').style.display = 'flex';
+    try {
+      const body = await api('/api/bili/login', { method: 'POST', body: '{}' });
+      qrcodeKey = body.qrcodeKey;
+      $('qrImg').src = 'data:image/png;base64,' + body.pngBase64;
+      $('qrState').textContent = '用 B 站 App 扫码';
+      setStatus('');
+      clearInterval(qrTimer);
+      qrTimer = setInterval(pollLogin, 2500);
+    } catch (error) {
+      setStatus('二维码生成失败：' + error.message, 'bad');
+    }
+  }
+
+  async function pollLogin() {
+    if (!qrcodeKey) return;
+    try {
+      const body = await api('/api/bili/login/poll', { method: 'POST', body: JSON.stringify({ qrcodeKey }) });
+      if (body.state === 'waiting') { $('qrState').textContent = '等待扫码…'; return; }
+      if (body.state === 'scanned') { $('qrState').textContent = '已扫码，请在手机上确认'; return; }
+      if (body.state === 'expired') { $('qrState').textContent = '二维码过期了，重新点「扫码登录」'; clearInterval(qrTimer); return; }
+      if (body.state === 'success') {
+        $('qrState').textContent = '登录成功';
+        clearInterval(qrTimer);
+        $('qrBox').style.display = 'none';
+        renderLogin(body.login || { loggedIn: true });
+        setStatus('登录成功', 'ok');
+      }
+    } catch (error) {
+      $('qrState').textContent = '查询出错：' + error.message;
+    }
+  }
+
+  async function logout() {
+    try {
+      await api('/api/bili/logout', { method: 'POST', body: '{}' });
+      $('loginState').textContent = '未登录（热门/搜索仍可用）';
+      $('qrBox').style.display = 'none';
+      clearInterval(qrTimer);
+      setStatus('已退出登录', 'ok');
+    } catch (error) {
+      setStatus('退出失败：' + error.message, 'bad');
+    }
+  }
+
+  async function runOnce() {
+    $('runState').textContent = '挑选并发送中…';
+    $('runBtn').disabled = true;
+    try {
+      const body = await api('/api/bili/run', { method: 'POST', body: '{}' });
+      const first = body.results?.[0];
+      $('runState').textContent = first ? '已发给 ' + first.key + '：' + first.title : '发完了';
+      setStatus('已分享 1 条', 'ok');
+      await load();
+    } catch (error) {
+      $('runState').textContent = '失败：' + error.message;
+    } finally {
+      $('runBtn').disabled = false;
+    }
+  }
+
+  function candDur(sec) {
+    const s = Math.max(0, Math.round(Number(sec) || 0));
+    const m = Math.floor(s / 60);
+    return m + ':' + String(s % 60).padStart(2, '0');
+  }
+  function candCount(n) {
+    const v = Number(n) || 0;
+    if (v >= 100000000) return (v / 100000000).toFixed(1).replace(/\.0$/, '') + '亿';
+    if (v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + '万';
+    return String(v);
+  }
+
+  async function loadCandidates() {
+    $('candState').textContent = '取候选…';
+    $('candBtn').disabled = true;
+    try {
+      const body = await api('/api/bili/candidates', {
+        method: 'POST',
+        body: JSON.stringify({
+          mode: $('candMode').value,
+          query: $('candQuery').value.trim(),
+          limit: Number($('candLimit').value) || 8
+        })
+      });
+      const list = body.videos || [];
+      const box = $('candList');
+      box.innerHTML = '';
+      for (const v of list) {
+        const card = document.createElement('a');
+        card.className = 'candCard';
+        card.href = v.url || '#';
+        card.target = '_blank';
+        card.rel = 'noreferrer';
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = v.title || '';
+        if (v.cover) img.src = v.cover + (v.cover.indexOf('?') >= 0 ? '&' : '?') + 'token=' + encodeURIComponent(token);
+        card.appendChild(img);
+        const title = document.createElement('div');
+        title.className = 'candTitle';
+        title.textContent = v.title || '(无标题)';
+        const meta = document.createElement('div');
+        meta.className = 'candMeta';
+        meta.textContent = [v.owner, v.duration ? candDur(v.duration) : '', v.view ? candCount(v.view) + '播放' : ''].filter(Boolean).join(' · ');
+        card.appendChild(title);
+        card.appendChild(meta);
+        box.appendChild(card);
+      }
+      $('candState').textContent = list.length ? list.length + ' 条' : '一条都没取到';
+    } catch (error) {
+      $('candState').textContent = '失败：' + error.message;
+    } finally {
+      $('candBtn').disabled = false;
+    }
+  }
+
+  $('candBtn').addEventListener('click', loadCandidates);
+  $('saveBtn').addEventListener('click', save);
+  $('reloadBtn').addEventListener('click', load);
+  $('loginBtn').addEventListener('click', startLogin);
+  $('logoutBtn').addEventListener('click', logout);
+  $('runBtn').addEventListener('click', runOnce);
+  $('autoMode').addEventListener('change', () => {
+    $('mixRow').style.display = ($('autoMode').value === 'mixed') ? 'flex' : 'none';
+  });
+  load();
+</script>
+</body>
+</html>
