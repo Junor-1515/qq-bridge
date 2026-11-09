@@ -22,6 +22,7 @@
   <a href="#安装">安装</a> ·
   <a href="#配置">配置</a> ·
   <a href="#运行模式">运行模式</a> ·
+  <a href="#可选组件">可选组件</a> ·
   <a href="docs/README.md">文档</a> ·
   <a href="RULES.md">安全边界</a>
 </p>
@@ -38,7 +39,7 @@
 
 把 QQ 消息接入 DSH agent：QQ 好友/群发来的消息会变成 DSH 会话里的用户消息，agent 的回复（含提问、工具审批）会发回 QQ。
 
-> ⚠️ **当前版本 `v0.2.1-r1`，适配 DSH 0.2.1-rc.2**（0.2.0-rc.2 亦兼容；两个版本上都逐项实测：`npm run verify:adaptation`）。
+> ⚠️ **当前版本见顶部 release 徽章，适配 DSH 0.2.1-rc.2**（0.2.0-rc.2 亦兼容；两个版本上都逐项实测：`npm run verify:adaptation`）。
 > 鉴权用 `~/.dsh` 里持久化的浏览器会话签名密钥**离线铸造 Cookie** —— DSH 0.1.7 起进程启动 token
 > 只存在于内存、不再落盘，旧版「从 guard 日志里读 token」的方式已失效。agent preset 是 DSH 0.1.7 起的
 > `@deepseek-ai/dsh-agent-preset` Cordis 行（`~/.dsh/.agent-presets/` 目录机制已废）。协议代次
@@ -131,6 +132,17 @@ QQ 消息 ──► SnowLuma（OneBot v11 WS）──► 本桥接进程 ──�
 2. 运行中的 SnowLuma，且配置好 OneBot WebSocket 与 HTTP API（默认 `ws://127.0.0.1:3001` / `http://127.0.0.1:3000`，`accessToken` 视配置填写）
 3. Node.js ≥ 22.13
 
+## 可选组件
+
+桥接本体不依赖下面两个 DSH 插件，不装也能启动；需要 QQ 专用 preset，或想在 DSH 设置页里切模式时再装：
+
+| 组件 | 作用 |
+| --- | --- |
+| [plugins/qq-agent-presets](plugins/qq-agent-presets/README.md) | 注入 `qq-chat` / `qq-chat-v2` 两个 agent preset，带 `qq-tool-restrict` 安全守卫 |
+| [plugins/qq-mode-console](plugins/qq-mode-console/README.md) | 注册 `qq-mode` 设置命名空间，让 DSH 设置页读写桥接模式 |
+
+`node scripts/setup-dsh.mjs` 会一并安装它们；只想挂 MCP、不用 QQ 专用 preset 的话，也可以跳过插件部分，自己按 [docs/guides/DSH_SETUP.md](docs/guides/DSH_SETUP.md) 配。
+
 ## 安装与配置
 
 ```bash
@@ -172,9 +184,9 @@ npm install        # 安装依赖（postinstall 会自动修补 @snowluma/sdk �
 
 > ⚠️ `allowAllWhenEmpty: true` 表示「白名单没填就全部放行」——把 agent 接入 QQ 等于把账号控制权交给了模型，建议先填白名单。
 
-### DSH 端安装（必做：装 preset + 挂 MCP）
+### DSH 端安装（必做：挂 MCP；要用 QQ 专用 preset 再装插件）
 
-桥接和控制台能跑起来还不够，DSH 端还需要安装两个聊天 preset（`qq-chat` / `qq-chat-v2`）并挂载 MCP。**单机新装同样必须执行这一步**（不是只有「另一台设备」才需要），装完还要**重启 DSH**：
+桥接和控制台能跑起来还不够，MCP 必须挂；默认配置还会用到 `qq-chat` / `qq-chat-v2`，所以通常要一并装 `plugins/qq-agent-presets`（可选组件，但默认 `agentPreset` 依赖它）。**单机新装同样必须执行这一步**（不是只有「另一台设备」才需要），装完还要**重启 DSH**：
 
 ```bash
 node scripts/setup-dsh.mjs
@@ -299,7 +311,9 @@ qq-bridge/
     legacy/             # 历史归档（已被取代或问题已全部修复的旧报告）
   audio/                # 语音库：把准备好的音频放这里，可作 QQ 语音发出（用法见 docs/README.md 文档索引）
   dsh/agent-presets/    # qq-chat / qq-chat-v2 的 DSH agent preset 模板
-  plugins/qq-mode-console  # DSH 插件：注册 qq-mode 设置命名空间（仅 host 半，UI 卡片未实现）
+  plugins/README.md     # 可选 DSH 插件索引（不装桥接也能启动）
+  plugins/qq-agent-presets/  # 可选：两个 QQ 专用 DSH agent preset + 安全守卫
+  plugins/qq-mode-console/   # 可选：注册 qq-mode 设置命名空间（仅 host 半，UI 卡片未实现）
   src/
     bridge.js           # 主程序
     dsh-client.js       # Node 版 DSH API 客户端（WS 下行）

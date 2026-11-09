@@ -5,6 +5,11 @@
   "type": "module",
   "main": "./lib/index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Junor-1515/qq-bridge.git",
+    "directory": "plugins/qq-mode-console"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
