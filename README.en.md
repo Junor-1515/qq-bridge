@@ -2,7 +2,9 @@
 
 > Connect QQ messages to DeepSeek Harness (DSH) agents: QQ friends/groups become DSH conversations, and agent replies (including questions and tool approvals) are sent back to QQ.
 
-> ⚠️ **Current release `v0.2.1-r1`, targets DSH 0.2.1-rc.2** (also compatible with 0.2.0-rc.2; verified item by item on both — run `npm run verify:adaptation`). It uses the persistent local signing key to **mint the session Cookie offline**, slash RPC endpoints and the `/api/remote.mux` event stream — a protocol generation introduced in DSH `0.1.2-alpha.1`, incompatible with the older dot-endpoint protocol. Reading the launch token out of the old guard logs has not worked since DSH 0.1.7 (the token is generated per process and never written to disk). Agent presets are `@deepseek-ai/dsh-agent-preset` Cordis rows since DSH 0.1.7 (the `~/.dsh/.agent-presets/` directory mechanism is gone). On **DSH `0.1.1-rc.2` or earlier**, use tag [`v0.1.0`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.0); for **DSH 0.1.5-rc.1** use [`v0.1.5`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.5); for **DSH 0.1.7-rc.2** use [`v0.1.7`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.7).
+> **Unofficial modified fork**: based on [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) (MIT), with additions such as video reading and music playback. Original copyright belongs to Derpyu520 and contributors. This is not an official release and is not affiliated with the original project.
+
+> ⚠️ **Current release: see the release badge above; targets DSH 0.2.1-rc.2** (also compatible with 0.2.0-rc.2; verified item by item on both — run `npm run verify:adaptation`). It uses the persistent local signing key to **mint the session Cookie offline**, slash RPC endpoints and the `/api/remote.mux` event stream — a protocol generation introduced in DSH `0.1.2-alpha.1`, incompatible with the older dot-endpoint protocol. Reading the launch token out of the old guard logs has not worked since DSH 0.1.7 (the token is generated per process and never written to disk). Agent presets are `@deepseek-ai/dsh-agent-preset` Cordis rows since DSH 0.1.7 (the `~/.dsh/.agent-presets/` directory mechanism is gone). On **DSH `0.1.1-rc.2` or earlier**, use tag [`v0.1.0`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.0); for **DSH 0.1.5-rc.1** use [`v0.1.5`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.5); for **DSH 0.1.7-rc.2** use [`v0.1.7`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.7).
 >
 > **r4 highlights**: sticker/animated-emoji pipeline (CDN first, `emoji_id` fallback, multi-address DNS failover), web search now reuses DSH's own DeepSeek search backend (Bing only as fallback), `qq_wait_for_messages` long-polling past the 300 s undici timeout, plus fixes for the mode-switch rollback, permanent "busy" turns, missing self-identity injection and a full-project audit. Details: [Release v0.2.0-r4](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.2.0-r4).
 >
@@ -49,6 +51,17 @@ QQ messages ──► SnowLuma (OneBot v11 WS) ──► qq-bridge ──► DSH
 - Running DeepSeek Harness Web (default `http://127.0.0.1:3080`)
 - Running SnowLuma with OneBot v11 WebSocket and HTTP API enabled
 
+## Optional Components
+
+The bridge core does not import the two DSH plugin packages; they are optional. Install them when you want the QQ-specific presets or the `qq-mode` settings namespace.
+
+| Component | What it does |
+| --- | --- |
+| [`plugins/qq-agent-presets`](plugins/qq-agent-presets/README.md) | Injects the `qq-chat` / `qq-chat-v2` DSH agent presets plus the `qq-tool-restrict` safety guard |
+| [`plugins/qq-mode-console`](plugins/qq-mode-console/README.md) | Registers the `qq-mode` settings namespace so DSH settings can read/write the bridge mode |
+
+`node scripts/setup-dsh.mjs` installs both. If you only need the MCP bridge and do not use the QQ presets, you can skip the plugin part and configure DSH manually.
+
 ## Quick Start
 
 ```bash
@@ -85,7 +98,7 @@ Or double-click `start.bat` on Windows (guard mode with auto-restart).
 
 ## DSH Setup on Another Device
 
-The bridge and console can run without extra DSH setup, but the two DSH chat presets (`qq-chat` and `qq-chat-v2`) and the MCP servers must be installed into DSH once per machine:
+The MCP servers must be installed into DSH once per machine. The two DSH chat presets (`qq-chat` / `qq-chat-v2`) are optional, but the default config uses them, so the setup script installs them too:
 
 ```bash
 node scripts/setup-dsh.mjs
@@ -122,8 +135,9 @@ qq-bridge/
     audits/             # review / optimisation reports
     legacy/             # archived docs that were superseded
   dsh/agent-presets/    # qq-chat / qq-chat-v2 DSH agent preset templates
-  plugins/qq-agent-presets  # DSH bundle: generates the qq-chat / qq-chat-v2 preset patch rows + the shared tool guard
-  plugins/qq-mode-console  # DSH plugin: exposes the qq-mode settings namespace (host half only; no UI card yet)
+  plugins/README.md     # optional DSH plugin index
+  plugins/qq-agent-presets/  # optional: qq-chat / qq-chat-v2 preset rows + shared tool guard
+  plugins/qq-mode-console/   # optional: exposes the qq-mode settings namespace (host half only; no UI card yet)
   src/                  # bridge core and MCP servers
   public/
     console.html        # local web console
