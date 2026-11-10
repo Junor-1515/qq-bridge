@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">qq-bridge</h1>
-<p align="center"><strong>把 QQ 消息接入 DeepSeek Harness，让 agent 真的活在你的群里。</strong></p>
+<p align="center"><strong>把 QQ 消息接入 DeepSeek Harness，用 JSNU 免费本地模型让 agent 真的活在你的群里。</strong></p>
 
 > **非官方修改版**：本仓库基于 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge)（MIT）修改，加入了视频读取、音乐播放等扩展。原项目版权归 Derpyu520 及贡献者所有；本仓库不是官方发布，也不代表原项目。
 
@@ -15,12 +15,15 @@
   <img alt="DSH" src="https://img.shields.io/badge/DSH-0.2.1--rc.2-6d5efc?style=flat-square">
 </p>
 <p align="center">
+  <img alt="JSNU" src="https://img.shields.io/badge/JSNU-free%20local%20models-22c55e?style=flat-square">
+  <img alt="Qwen vision" src="https://img.shields.io/badge/vision-Qwen3.8--27B-a855f7?style=flat-square">
   <img alt="QQ" src="https://img.shields.io/badge/QQ-OneBot%20v11-12b7f5?style=flat-square">
   <img alt="SnowLuma" src="https://img.shields.io/badge/SnowLuma-ready-ffb86b?style=flat-square">
   <img alt="PRs" src="https://img.shields.io/badge/PRs-welcome-8b5cf6?style=flat-square">
 </p>
 
 <p align="center">
+  <a href="#免费方案jsnu-短上下文适配--qwen-视觉">免费方案</a> ·
   <a href="#这个-fork-的特色">特色</a> ·
   <a href="#功能">功能</a> ·
   <a href="#安装">安装</a> ·
@@ -35,12 +38,34 @@
 
 **English**: [README.en.md](README.en.md) | **中文**: [README.md](README.md)
 
+## 免费方案：JSNU 短上下文适配 + Qwen 视觉
+
+这个 fork 的重点不只是“多几个插件”，而是把 **江苏师范大学（JSNU）的免费本地模型**真正接进 QQ 群聊。JSNU 的 `deepseek-v4-flash` 上下文短、响应慢，而且不能读图；桥接用三件事绕开这些限制：
+
+- **动态新建 / 删除（归档）会话**：每个 QQ 群或好友对应一个 DSH 会话。累计输入超过 `socialV2.session.tokenBudget`（默认 30 万 token）、闲置超过 `idleRecycleMinutes`（默认 240 分钟），或到每日轮换时间（默认 05:00），桥接就停掉旧会话、归档，并在下一条消息新建一个。历史不会无限堆进同一个短上下文。
+- **摘要续接**：AI 退场/潜水期间的新消息不逐条塞回，而是整理成【群聊摘要】+【最近对话】，以静默 turn 投喂给会话。轮换后它仍知道刚才群里聊了什么，不必重放整段历史。
+- **Qwen 补视觉**：JSNU 模型库里的 `qwen3.8-27b` 是原生多模态。当前模型（`deepseek-v4-flash`）不能读图时，桥接把图片和视频抽帧交给 Qwen 描述成文字，再塞回上下文；也可以直接用 `switch-qwen.cmd` 把会话切到 Qwen。视频读取走的也是这条链路。
+
+结果：**日常对话基本不产生模型费用**，主要代价是本地模型响应慢。它适合不要求秒回、以陪伴和群聊为主的场景，不适合当实时客服。
+
+其他学校的同学可以照搬这套结构，只把自己学校的模型接进来：
+
+| 要改的地方 | 改什么 |
+| --- | --- |
+| `dsh.provider` / `dsh.model` | 换成自己学校模型服务里的对话模型（先在 DSH 里配好 provider） |
+| `dsh.imageDescriber.provider` / `model` / `baseUrl` / `apiKeyEnv` | 换成同一模型库里**能看图**的多模态模型、OpenAI 兼容地址和凭据环境变量 |
+| `dsh.vision` | 当前模型能吃图设 `true`；确认吃不了设 `false`，让桥接走 Qwen 转述，避免整轮 400 |
+| `socialV2.session.tokenBudget` / `idleRecycleMinutes` / `nightlyRecycleAt` | 按对方模型的上下文窗口调轮换阈值；窗口越小，预算越小 |
+
+> 轮换只在会话静默时发生，不会打断正在生成的一轮；换下的旧会话会被归档，不留在 DSH 左侧列表里。
+
 ## 这个 fork 的特色
 
-本仓库是 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) 的**非官方 fork**，在保留原项目全部能力的基础上，重点加强了「让 AI 真的能听、能看、能分享」：
+本仓库是 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) 的**非官方 fork**，在保留原项目全部能力的基础上，重点做两件事：**用 JSNU 免费本地模型把对话成本压到接近零**，以及**让 AI 真的能听、能看、能分享**：
 
 | 能力 | 做了什么 |
 | --- | --- |
+| 🧠 免费运行（JSNU） | 为 JSNU 免费本地模型的短上下文做适配：会话按 token 预算/闲置/夜间轮换，旧会话归档，群聊摘要续接；同库 Qwen 多模态给 DeepSeek-V4 补视觉。日常对话基本零模型费，只慢 |
 | 🎬 视频读取 | 群里有人发视频，AI 不再只看到「[视频]」：桥接用 ffmpeg 等间隔抽 6 帧、拼成 3×2 网格交给模型，短视频也能“看懂”画面 |
 | 📺 B 站 | 分享视频、定时自动分享、按群聊话题找视频；解析后的 MP4 默认直接以 **QQ 视频消息**发出（不走群文件），长视频有时长上限 |
 | 🎵 音乐 | QQ 音乐 / 网易云链接和卡片自动解析成 MP3 语音；按歌名搜歌、按喜好推荐；两边都搜不到时去 B 站找同名音乐兜底；带缓存与喜好词条 |
@@ -108,7 +133,7 @@ QQ 消息 ──► SnowLuma（OneBot v11 WS）──► 本桥接进程 ──�
 ## 架构
 
 - **QQ 侧**：`@snowluma/sdk` 的 `SnowLumaWebSocketClient`（OneBot v11 WebSocket 客户端，自动重连）
-- **DSH 侧**：适配 DSH 0.1.2 起引入、**0.2.1-rc.2 上逐项复核**的协议——用本机持久化签名密钥铸造会话 Cookie 鉴权、`/api/<namespace>/<method>` 斜杠 RPC、`/api/remote.mux` + `session/follow` 事件流（`session/control` 的队列读 `value.projections[<id>].values.inbox`，另有一元 `session/projections` 主路径）；复用 `AbstractApiClient` 传输层但不再依赖旧版 zod value schema。会话模型由桥接按 `config.json` 的 `dsh.model` 逐会话 `session.selectModel` 固定（默认 `deepseek-flash` = DeepSeek-V41-Flash，多模态）
+- **DSH 侧**：适配 DSH 0.1.2 起引入、**0.2.1-rc.2 上逐项复核**的协议——用本机持久化签名密钥铸造会话 Cookie 鉴权、`/api/<namespace>/<method>` 斜杠 RPC、`/api/remote.mux` + `session/follow` 事件流（`session/control` 的队列读 `value.projections[<id>].values.inbox`，另有一元 `session/projections` 主路径）；复用 `AbstractApiClient` 传输层但不再依赖旧版 zod value schema。会话模型由桥接按 `config.json` 的 `dsh.model` 逐会话 `session.selectModel` 固定（示例默认 `deepseek-flash` = DeepSeek-V41-Flash，多模态；本 fork 的免费部署改用 JSNU 的 `deepseek-v4-flash` 承担文本、`qwen3.8-27b` 承担视觉转述，见上节）
 - **agent 自主收发 QQ**：DSH 的 MCP 客户端（`~/.dsh/profiles/web/cordis.patch.yml` 配置）接入三个 MCP server：
   - `snowluma`（桥接自带 `src/mcp-snowluma-safe.js`）：QQ 动作**安全子集**（查状态/查群/查消息/发消息，发送强制白名单；发送工具支持可选 `replyToMessageId` 引用回复）
   - `snowluma-host`（桥接自带 `src/mcp-host-server.js`）：**只有** `snowluma_status`（只读探活 `get_login_info`）。
@@ -179,7 +204,8 @@ npm install        # 安装依赖（postinstall 会自动修补 @snowluma/sdk �
 | 字段 | 说明 |
 | --- | --- |
 | `dsh.baseUrl` | DSH Web 地址，默认 `http://127.0.0.1:3080` |
-| `dsh.provider` / `dsh.model` / `dsh.reasoningEffort` | DSH 会话使用的模型/推理强度；若你的 DSH 没有示例中的模型，改成 DSH 设置页里可用的模型即可（选择失败只打日志，不阻塞启动） |
+| `dsh.provider` / `dsh.model` / `dsh.reasoningEffort` | DSH 会话使用的模型/推理强度；若你的 DSH 没有示例中的模型，改成 DSH 设置页里可用的模型即可（选择失败只打日志，不阻塞启动）。JSNU 免费部署用 `jsnu` / `deepseek-v4-flash` |
+| `dsh.vision` / `dsh.imageDescriber` | 当前模型能不能吃图，以及吃不了时用哪个多模态模型转述。`vision` 不填时按内置名单判断；`imageDescriber` 支持 `provider` / `model` / `baseUrl` / `apiKeyEnv` / `maxTokens` / `timeoutMs`，默认就是 JSNU 的 `qwen3.8-27b` |
 | `dsh.authToken` | DSH launch token（进程启动凭据）。**通常应留空**：留空时桥接用 `~/.dsh/.credentials.yaml` 里持久化的签名密钥**离线铸造**会话 Cookie，不依赖任何进程期状态（DSH 0.1.7 起启动 token 只存在于内存、日志里那条是上一个进程的陈旧值，换 Cookie 只会 401）。只有显式填了才会优先走 token 交换 |
 | `dsh.authHeader` / `dsh.authPrefix` | 保留字段，当前新版 DSH 链路使用 Cookie 交换，不再直接发送该鉴权头 |
 | `snowluma.wsUrl` | SnowLuma OneBot **WebSocket** 地址（如 `ws://127.0.0.1:3001`） |
@@ -190,6 +216,7 @@ npm install        # 安装依赖（postinstall 会自动修补 @snowluma/sdk �
 | `snowluma.launcherPath` / `homeDir` | SnowLuma 安装目录（用于 token/端点自发现）。⚠️ 桥接**不会**启动或停止 SnowLuma（见 `LICENSE`） |
 | `agentPreset` | QQ 会话使用的 DSH agent preset，默认 `qq-chat`（改性格见下文） |
 | `socialV2.agentPreset` | `reserved2` 模式使用的 DSH agent preset，默认 `qq-chat-v2` |
+| `socialV2.session` | 短上下文轮换：`tokenBudget`（单会话累计输入，默认 300000）、`idleRecycleMinutes`（闲置轮换，默认 240）、`nightlyRecycleAt`（每日轮换，默认 `05:00`）。旧会话会被归档，下一条消息从新会话开始 |
 | `socialV2.initialPromptMaxChars` | 会话「初始提示词」（控制台为某个群/私聊预写的环境说明）的字数上限，默认 2000，允许 100~8000。越界值会在启动时收敛并保持原文件不动 |
 | `socialV2.media` | 图片/表情的上限：`maxBytes`（单条消息总字节，默认 8MB）、`maxPixels`（单张像素，默认 64MP）、`maxCount`（单条最多处理几张，默认 5）。越界值启动时收敛 |
 | `webSearch.provider` | 联网搜索后端：`auto`（默认，优先 DeepSeek、失败回退 Bing）/ `deepseek`（仅 DeepSeek，无凭据时报错）/ `bing` |

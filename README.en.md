@@ -16,6 +16,27 @@ For the detailed Chinese guide, see **[docs/guides/PROJECT_GUIDE.md](docs/guides
 The documentation index (one line per doc, with "still current?" notes) is **[docs/README.md](docs/README.md)**;
 the repository/folder and script-naming conventions are in **[docs/FOLDER_MAP.md](docs/FOLDER_MAP.md)**.
 
+## The free setup: JSNU short-context adaptation + Qwen vision
+
+This fork is built around one goal: run a full QQ group agent on **Jiangsu Normal University (JSNU)'s free local models**. JSNU's `deepseek-v4-flash` has a short context window, is slow, and cannot read images. The bridge works around all three:
+
+- **Dynamic session create / delete (archive)**: each QQ group or friend maps to a DSH session. When cumulative input exceeds `socialV2.session.tokenBudget` (300K by default), the session is idle for `idleRecycleMinutes` (240), or the nightly cutoff (05:00) arrives, the bridge stops and archives the old session and starts a fresh one on the next message. History never grows without bound inside a short context.
+- **Summary hand-off**: messages that arrive while the agent is away are compressed into a 【群聊摘要】 + 【最近对话】 block and fed to the session as a silent turn. After a rotation it still knows what the group was talking about, without replaying the whole history.
+- **Qwen as the eyes**: `qwen3.8-27b` in the same JSNU model library is natively multimodal. When the active model (`deepseek-v4-flash`) cannot accept images, the bridge has Qwen describe images and sampled video frames, then injects the text. You can also switch the whole session to Qwen with `switch-qwen.cmd`.
+
+The result: **day-to-day conversation costs essentially nothing in model fees**; the trade-off is slow local inference. It fits always-on group chat and companionship, not real-time customer support.
+
+Other schools can reuse the same structure by pointing it at their own models:
+
+| What to change | What to do |
+| --- | --- |
+| `dsh.provider` / `dsh.model` | Your school's chat model (configure the provider in DSH first) |
+| `dsh.imageDescriber.provider` / `model` / `baseUrl` / `apiKeyEnv` | A multimodal model from the same library, its OpenAI-compatible URL and key env var |
+| `dsh.vision` | `true` if the active model accepts images; `false` to force Qwen description and avoid a 400 |
+| `socialV2.session.tokenBudget` / `idleRecycleMinutes` / `nightlyRecycleAt` | Tune rotation to the model's context window |
+
+> Rotation only happens while a session is quiet, so it never interrupts a running turn. Retired sessions are archived and disappear from the DSH sidebar.
+
 ## Architecture
 
 ```
@@ -25,7 +46,7 @@ QQ messages ──► SnowLuma (OneBot v11 WS) ──► qq-bridge ──► DSH
 ```
 
 - **QQ side**: `@snowluma/sdk` provides the OneBot v11 WebSocket client.
-- **DSH side**: adapted for DSH 0.1.2+ and **re-verified on 0.2.1-rc.2** — session Cookie minted from the persistent local signing key, `/api/<namespace>/<method>` slash RPC, and `/api/remote.mux` + `session/follow` event stream (the pending queue is read from `value.projections[<id>].values.inbox`, with the unary `session/projections` RPC as the primary path). The per-session model is pinned by the bridge via `session.selectModel` from `config.json`'s `dsh.model` (default `deepseek-flash` = DeepSeek-V41-Flash, multimodal).
+- **DSH side**: adapted for DSH 0.1.2+ and **re-verified on 0.2.1-rc.2** — session Cookie minted from the persistent local signing key, `/api/<namespace>/<method>` slash RPC, and `/api/remote.mux` + `session/follow` event stream (the pending queue is read from `value.projections[<id>].values.inbox`, with the unary `session/projections` RPC as the primary path). The per-session model is pinned by the bridge via `session.selectModel` from `config.json`'s `dsh.model` (example default `deepseek-flash` = DeepSeek-V41-Flash, multimodal; this fork's free deployment uses JSNU's `deepseek-v4-flash` for text and `qwen3.8-27b` for the vision hand-off — see above).
 - **Agent tools**: three bundled MCP servers expose a restricted QQ toolset (`qq_status`, `qq_list_groups`, `qq_get_group_history`, `qq_send_group_message`, `qq_reply`, etc.), a read-only host probe (`snowluma_status` only), and a read-only `web_search` / `web_fetch` pair with SSRF protection.
   ⚠️ **`start_snowluma` / `stop_snowluma` (and `snowluma.allowProcessControl`) were removed in v0.1.5**: SnowLuma EULA §5.4 requires prior written permission to deploy its proprietary native components through automated scripts. This program only probes, never deploys — installing, starting and scanning SnowLuma is always up to you. See [LICENSE](LICENSE) and [RULES.md](RULES.md).
 - **Console**: a local web console at `http://127.0.0.1:3100`, organised into ten task-based pages (Overview, Sessions & Approvals, Persona, Social v2, Social v1, Slang, Usage & Cost, Access & Security, Operations, Tool Reference) with cross-page feature search and a **light / dark theme** (one-click toggle in the header; follows the OS preference until you choose), for mode switching, role management, whitelist/admin settings, slang management, memory, stickers and more. The Persona page manages roles (view/edit/rename/duplicate/delete the prompt of each persona), shows and edits both prompt layers separately — the **simulation prompt** built into the preset (tool/behaviour protocol; synced to DSH, restart required) and the **persona prompt** (`roles/*.md`; applied immediately) — and sets the **DSH reasoning effort** (`max` by default, `high`/`low` selectable). The **Usage & Cost** page shows real-time token consumption and its price in CNY, broken down per group/friend and per conversation turn (see [docs/guides/TOKEN_USAGE_CONSOLE.md](docs/guides/TOKEN_USAGE_CONSOLE.md)).
@@ -41,6 +62,7 @@ QQ messages ──► SnowLuma (OneBot v11 WS) ──► qq-bridge ──► DSH
 - Slang/network-expression learning with human confirmation.
 - Lightweight memory system for active topics, pending thoughts and member impressions.
 - Sticker library integration with AI-friendly sticker usage.
+- **Tuned for JSNU's free local models**: dynamic session rotation + archival and chat-summary hand-off stretch a short context; Qwen3.8-27B provides vision for DeepSeek-V4. Day-to-day chat is essentially free, at the cost of slower replies.
 - **Bilibili module** (built in, not a separate plugin): share videos, scheduled sharing, interest-tag discovery; shared videos can be downloaded and sent as native QQ video messages. Configure at `/bili`.
 - **Music module** (built in): auto-parse QQ Music / NetEase Cloud links and cards into MP3 voice messages, search by title, recommend from learned tags, with a Bilibili fallback when both catalogs miss. Configure at `/music`.
 - `start-services.cmd` (Windows): aligns the current DSH port, then starts SnowLuma and the bridge if missing; restarts the bridge automatically when the DSH port changes.
@@ -79,8 +101,11 @@ Key settings:
 | Field | Description |
 | --- | --- |
 | `dsh.baseUrl` | DSH Web API URL, default `http://127.0.0.1:3080` |
+| `dsh.provider` / `dsh.model` / `dsh.reasoningEffort` | Model and reasoning effort used for DSH sessions. If your DSH does not expose the example model, point this at any model available in the DSH settings page (a failed selection only logs, it does not block startup). The JSNU free setup uses `jsnu` / `deepseek-v4-flash` |
 | `dsh.authToken` | DSH launch token (a process-launch credential). **Normally leave this empty**: with no token the bridge mints the session cookie offline from the persistent signing key in `~/.dsh/.credentials.yaml`, which depends on no per-process state (since DSH 0.1.7 the launch token lives only in memory — the one in the old logs belongs to a previous process and only yields a 401). A value here is honoured first if you set one |
 | `dsh.authHeader` / `dsh.authPrefix` | Legacy fields kept for compatibility; the current path uses Cookie auth and does not send this header |
+| `dsh.vision` / `dsh.imageDescriber` | Whether the active model accepts images, and which multimodal model describes them when it does not. `imageDescriber` takes `provider` / `model` / `baseUrl` / `apiKeyEnv` / `maxTokens` / `timeoutMs`; defaults to JSNU's `qwen3.8-27b` |
+| `socialV2.session` | Short-context rotation: `tokenBudget` (cumulative input per session, default 300000), `idleRecycleMinutes` (default 240), `nightlyRecycleAt` (default `05:00`). Retired sessions are archived and the next message starts a fresh one |
 | `snowluma.wsUrl` | SnowLuma OneBot **WebSocket** URL (e.g. `ws://127.0.0.1:3001`) |
 | `snowluma.accessToken` | OneBot access token, leave empty if not configured |
 | `snowluma.httpUrl` | OneBot **HTTP API** URL (e.g. `http://127.0.0.1:3000`); do not point this at the WebSocket port or you will get HTTP 426 |
