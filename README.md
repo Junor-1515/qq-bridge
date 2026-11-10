@@ -5,8 +5,10 @@
 <h1 align="center">qq-bridge</h1>
 <p align="center"><strong>把 QQ 消息接入 DeepSeek Harness，让 agent 真的活在你的群里。</strong></p>
 
+> **非官方修改版**：本仓库基于 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge)（MIT）修改，加入了视频读取、音乐播放等扩展。原项目版权归 Derpyu520 及贡献者所有；本仓库不是官方发布，也不代表原项目。
+
 <p align="center">
-  <a href="https://github.com/Junor-1515/qq-bridge/releases"><img alt="release" src="https://img.shields.io/github/v/release/Junor-1515/qq-bridge?style=flat-square&color=ff8fc7"></a>
+  <a href="https://github.com/Junor-1515/qq-bridge-unofficial/releases"><img alt="release" src="https://img.shields.io/github/v/release/Junor-1515/qq-bridge-unofficial?style=flat-square&color=ff8fc7"></a>
   <img alt="license" src="https://img.shields.io/badge/license-MIT-7dd3fc?style=flat-square">
   <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A522.13-339933?style=flat-square&logo=node.js&logoColor=white">
   <img alt="DSH" src="https://img.shields.io/badge/DSH-0.2.1--rc.2-6d5efc?style=flat-square">
@@ -45,9 +47,9 @@
 > `@deepseek-ai/dsh-agent-preset` Cordis 行（`~/.dsh/.agent-presets/` 目录机制已废）。协议代次
 > （Cookie 鉴权 / 斜杠 RPC / `/api/remote.mux` 事件流）自 DSH `0.1.2-alpha.1` 起引入，与更早的点号
 > endpoint 协议不兼容 —— **DSH `0.1.1-rc.2` 及更早**请改用 tag
-> [`v0.1.0`](https://github.com/Junor-1515/qq-bridge/releases/tag/v0.1.0)；**DSH 0.1.5-rc.1** 用
-> [`v0.1.5`](https://github.com/Junor-1515/qq-bridge/releases/tag/v0.1.5)；**DSH 0.1.7-rc.2** 用
-> [`v0.1.7`](https://github.com/Junor-1515/qq-bridge/releases/tag/v0.1.7)。
+> [`v0.1.0`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.0)；**DSH 0.1.5-rc.1** 用
+> [`v0.1.5`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.5)；**DSH 0.1.7-rc.2** 用
+> [`v0.1.7`](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.1.7)。
 >
 > v0.2.0 修的主要是**会话待处理队列读不出来**：桥接退役/重置 QQ 会话时要先清掉 DSH 侧没跑的队列，
 > 而那段解析认的是一个**从来不存在的字段**（`session/control` baseline 的 `value.queues[<id>]`）——
@@ -64,7 +66,7 @@
 > **r4 主要改动**：QQ 表情包/动图链路（表情 CDN 优先、`emoji_id` 兜底、DNS 多地址故障切换）、
 > 联网搜索改用与 DSH 同源的 DeepSeek 搜索（Bing 仅兜底）、`qq_wait_for_messages` 改 5 分钟长轮询、
 > 控制台切模式被 5 秒轮询改回去、回合永久「繁忙」、机器人身份未注入等 issue 修复，外加一轮整体体检。
-> 逐条见 [**Release v0.2.0-r4**](https://github.com/Junor-1515/qq-bridge/releases/tag/v0.2.0-r4)。
+> 逐条见 [**Release v0.2.0-r4**](https://github.com/Derpyu520/qq-bridge/releases/tag/v0.2.0-r4)。
 >
 > **v0.2.1-r1 主要改动**：适配 DSH 0.2.1-rc.2。修掉一处 **P0**——persona 里的 `{{cwd}}`
 > 提示词变量在 0.2.1 被删除，导致**每个回合在系统提示词装配阶段直接 error、模型一次都不跑**
@@ -82,7 +84,7 @@ QQ 消息 ──► SnowLuma（OneBot v11 WS）──► 本桥接进程 ──�
 
 ## 项目展示
 
-📽️ [AI 仿真群友 - 项目介绍视频](https://github.com/Junor-1515/qq-bridge/releases/download/v0.1.5/project-intro.mp4)（约 11 MB）
+📽️ [AI 仿真群友 - 项目介绍视频](https://github.com/Derpyu520/qq-bridge/releases/download/v0.1.5/project-intro.mp4)（约 11 MB）
 
 > 视频改由 **Release 附件**托管，不在仓库里——只想安装桥接的人不必再下载这 11 MB（它此前占整个仓库体积的 88%）。
 
@@ -205,7 +207,7 @@ node scripts/setup-dsh.mjs
 
 2. **装桥接并复制配置**
    ```bash
-   git clone https://github.com/Junor-1515/qq-bridge.git
+   git clone https://github.com/Junor-1515/qq-bridge-unofficial.git
    cd qq-bridge
    npm install
    ```
