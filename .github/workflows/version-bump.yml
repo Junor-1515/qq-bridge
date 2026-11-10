@@ -34,3 +34,12 @@ jobs:
           [ -f package-lock.json ] && git add package-lock.json
           git commit -m "chore(release): v$(node -p "require('./package.json').version") [skip version]"
           git push
+
+      - name: Tag and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          gh release create "$VERSION" --title "$VERSION" --generate-notes --verify-tag
