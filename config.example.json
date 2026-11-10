@@ -253,6 +253,12 @@
       "wakeMaxChars": 6000
     },
     "initialPromptMaxChars": 2000,
+    "music": {
+      "enabled": true,
+      "maxSeconds": 300,
+      "autoParseCards": true,
+      "recommendTags": 3
+    },
     "media": {
       "maxBytes": 8388608,
       "maxPixels": 64000000,
@@ -264,6 +270,28 @@
       "gifTile": 240,
       "normalizeTimeoutMs": 25000
     }
+  },
+  "bili": {
+    "enabled": true,
+    "autoShare": { "enabled": false },
+    "mp4": { "enabled": true, "maxDurationMinutes": 10, "sendAsFile": false }
+  },
+  "tts": {
+    "enabled": true,
+    "activeVoice": "",
+    "auto": { "enabled": false, "probability": 0.1 }
+  },
+  "qzone": {
+    "enabled": true,
+    "dailyMin": 1,
+    "dailyMax": 2,
+    "reply": { "enabled": true },
+    "image": { "enabled": true },
+    "notify": { "enabled": true }
+  },
+  "mediaCache": {
+    "days": 7,
+    "maxMb": 500
   },
   "webSearch": {
     "provider": "auto",

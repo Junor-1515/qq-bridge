@@ -8,7 +8,8 @@
 > **非官方修改版**：本仓库基于 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge)（MIT）修改，加入了视频读取、音乐播放等扩展。原项目版权归 Derpyu520 及贡献者所有；本仓库不是官方发布，也不代表原项目。
 
 <p align="center">
-  <a href="https://github.com/Junor-1515/qq-bridge-unofficial/releases"><img alt="release" src="https://img.shields.io/github/v/release/Junor-1515/qq-bridge-unofficial?style=flat-square&color=ff8fc7"></a>
+  <a href="https://github.com/Junor-1515/qq-bridge"><img alt="fork" src="https://img.shields.io/badge/GitHub-fork%20of%20Derpyu520%2Fqq-bridge-8b5cf6?style=flat-square&logo=github"></a>
+  <a href="https://github.com/Junor-1515/qq-bridge/releases"><img alt="release" src="https://img.shields.io/github/v/release/Junor-1515/qq-bridge?style=flat-square&color=ff8fc7"></a>
   <img alt="license" src="https://img.shields.io/badge/license-MIT-7dd3fc?style=flat-square">
   <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A522.13-339933?style=flat-square&logo=node.js&logoColor=white">
   <img alt="DSH" src="https://img.shields.io/badge/DSH-0.2.1--rc.2-6d5efc?style=flat-square">
@@ -20,6 +21,7 @@
 </p>
 
 <p align="center">
+  <a href="#这个-fork-的特色">特色</a> ·
   <a href="#功能">功能</a> ·
   <a href="#安装">安装</a> ·
   <a href="#配置">配置</a> ·
@@ -32,6 +34,21 @@
 ---
 
 **English**: [README.en.md](README.en.md) | **中文**: [README.md](README.md)
+
+## 这个 fork 的特色
+
+本仓库是 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) 的**非官方 fork**，在保留原项目全部能力的基础上，重点加强了「让 AI 真的能听、能看、能分享」：
+
+| 能力 | 做了什么 |
+| --- | --- |
+| 🎬 视频读取 | 群里有人发视频，AI 不再只看到「[视频]」：桥接用 ffmpeg 等间隔抽 6 帧、拼成 3×2 网格交给模型，短视频也能“看懂”画面 |
+| 📺 B 站 | 分享视频、定时自动分享、按群聊话题找视频；解析后的 MP4 默认直接以 **QQ 视频消息**发出（不走群文件），长视频有时长上限 |
+| 🎵 音乐 | QQ 音乐 / 网易云链接和卡片自动解析成 MP3 语音；按歌名搜歌、按喜好推荐；两边都搜不到时去 B 站找同名音乐兜底；带缓存与喜好词条 |
+| 🔊 TTS | 文字转语音，支持多音色、参考音频、自动语音；语音条与普通文字消息共用同一套发送队列 |
+| 🌈 QQ 空间 | 定时发说说、按人格写文、从表情库挑配图、自动回评论、登录态失效时在 QQ 提醒 |
+| 🎛️ 统一开关 | 上面这些模块全部收进 **二代仿真控制台 → 可选插件**：默认开启，每个模块的常用配置就在开关下面，细项再点「完整设置」 |
+
+> 这些扩展是本 fork 自己加的，不属于原项目；遇到扩展相关的问题请提到本仓库，不要打扰上游。
 
 > 🗂️ 文档索引（全部文档一句话说明 + 是否仍然有效）见 **[docs/README.md](docs/README.md)**；仓库目录/脚本命名约定见 **[docs/FOLDER_MAP.md](docs/FOLDER_MAP.md)**。
 >
@@ -207,7 +224,7 @@ node scripts/setup-dsh.mjs
 
 2. **装桥接并复制配置**
    ```bash
-   git clone https://github.com/Junor-1515/qq-bridge-unofficial.git
+   git clone https://github.com/Junor-1515/qq-bridge.git
    cd qq-bridge
    npm install
    ```

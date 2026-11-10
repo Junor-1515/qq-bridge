@@ -806,6 +806,50 @@ summary {
   font-weight:500;
   color:var(--code-fg-strong)
 }
+.v2-module-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));
+  gap:10px;
+  margin-top:10px
+}
+.v2-module {
+  margin:0;
+  padding:10px 12px 12px;
+  background:var(--surface-subtle);
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
+  min-width:0
+}
+.v2-module legend {
+  padding:0 6px;
+  font-weight:600;
+  font-size:12px
+}
+.v2-module .row {
+  margin-top:7px;
+  gap:8px;
+  align-items:center
+}
+.v2-module .row label {
+  flex:1;
+  font-size:12px
+}
+.v2-module .row input[type=number] {
+  width:76px
+}
+.v2-module .row input[type=text] {
+  width:120px
+}
+.v2-module .row input[type=checkbox] {
+  width:auto
+}
+.v2-module .meta {
+  font-size:11px;
+  margin-top:8px
+}
+.v2-module a {
+  color:var(--accent, #6ea8fe)
+}
 table {
   width:100%;
   border-collapse:collapse;
@@ -2054,6 +2098,46 @@ button:active:not(:disabled) {
       <div class="meta" style="margin-top:6px">二代黑话学习：AI 可用 <code>qq_slang_submit</code> 提交陌生词，也可由桥接自动提取；管理员在「黑话词库」页面筛选确认后，词条会自动写入黑话提示词并注入 <code>qq_get_prompt</code> 与后续唤醒。</div>
 
       </div></details>
+<details class="settings-group" open><summary>可选插件（默认开启；关掉即停用对应能力）</summary><div class="settings-content">
+      <div class="meta" style="margin-bottom:8px">四个模块默认全部开启；关闭后桥接会拒绝或跳过对应功能。这里只放常用开关，完整参数点每块底部的「完整设置」。</div>
+      <div class="v2-module-grid">
+        <fieldset class="v2-module"><legend>📺 B 站</legend>
+          <div class="row"><label>启用 B 站能力</label><input type="checkbox" id="v2ModBiliEnabled"></div>
+          <div class="row"><label>定时自动分享</label><input type="checkbox" id="v2ModBiliAutoEnabled"></div>
+          <div class="row"><label>自动分享每日上限（0 = 不限）</label><input type="number" id="v2ModBiliAutoMaxPerDay" min="0" max="50" value="0"></div>
+          <div class="row"><label>B 站视频转 MP4</label><input type="checkbox" id="v2ModBiliMp4Enabled"></div>
+          <div class="row"><label>MP4 时长上限（分钟）</label><input type="number" id="v2ModBiliMp4MaxMin" min="1" max="120" value="10"></div>
+          <div class="row"><label>推荐流随机词条数</label><input type="number" id="v2ModBiliPickCount" min="1" max="10" value="3"></div>
+          <div class="meta">关闭 B 站能力后，音乐找不到歌时的 B 站兜底也会一起停用。<a href="/bili" data-module-link="/bili">完整设置 ↗</a></div>
+        </fieldset>
+        <fieldset class="v2-module"><legend>🔊 TTS 语音</legend>
+          <div class="row"><label>启用 TTS</label><input type="checkbox" id="v2ModTtsEnabled"></div>
+          <div class="row"><label>当前音色</label><input type="text" id="v2ModTtsActiveVoice" placeholder="留空 = 默认音色"></div>
+          <div class="row"><label>每次朗读字数上限</label><input type="number" id="v2ModTtsMaxChars" min="1" max="1000" value="300"></div>
+          <div class="row"><label>自动语音</label><input type="checkbox" id="v2ModTtsAutoEnabled"></div>
+          <div class="row"><label>自动语音概率（0~1）</label><input type="number" id="v2ModTtsAutoProbability" min="0" max="1" step="0.01" value="0.1"></div>
+          <div class="meta">音色、参考音频、翻译等高级项在完整设置里。<a href="/tts" data-module-link="/tts">完整设置 ↗</a></div>
+        </fieldset>
+        <fieldset class="v2-module"><legend>🌈 QQ 空间</legend>
+          <div class="row"><label>启用 QQ 空间</label><input type="checkbox" id="v2ModQzoneEnabled"></div>
+          <div class="row"><label>每天最少条数</label><input type="number" id="v2ModQzoneDailyMin" min="0" max="10" value="1"></div>
+          <div class="row"><label>每天最多条数</label><input type="number" id="v2ModQzoneDailyMax" min="0" max="10" value="2"></div>
+          <div class="row"><label>自动回复评论</label><input type="checkbox" id="v2ModQzoneReplyEnabled"></div>
+          <div class="row"><label>说说配图</label><input type="checkbox" id="v2ModQzoneImageEnabled"></div>
+          <div class="row"><label>登录态失效提醒</label><input type="checkbox" id="v2ModQzoneNotifyEnabled"></div>
+          <div class="meta">Cookie、文风模型、时段等高级项在完整设置里。<a href="/qzone" data-module-link="/qzone">完整设置 ↗</a></div>
+        </fieldset>
+        <fieldset class="v2-module"><legend>🎵 音乐</legend>
+          <div class="row"><label>启用音乐解析</label><input type="checkbox" id="v2ModMusicEnabled"></div>
+          <div class="row"><label>单条语音最长（秒）</label><input type="number" id="v2ModMusicMaxSeconds" min="5" max="3600" value="300"></div>
+          <div class="row"><label>推荐时随机词条数</label><input type="number" id="v2ModMusicRecommendTags" min="1" max="10" value="3"></div>
+          <div class="row"><label>自动解析群里的音乐卡片/链接</label><input type="checkbox" id="v2ModMusicAutoCards"></div>
+          <div class="row"><label>缓存保留天数</label><input type="number" id="v2ModMusicCacheDays" min="1" max="365" value="7"></div>
+          <div class="row"><label>缓存体积上限（MB）</label><input type="number" id="v2ModMusicCacheMaxMb" min="50" max="102400" value="500"></div>
+          <div class="meta">喜好词条、立即清缓存等在完整设置里。<a href="/music" data-module-link="/music">完整设置 ↗</a></div>
+        </fieldset>
+      </div>
+      </div></details>
 <details class="settings-group"><summary>语音库与语音发送（调试）</summary><div class="settings-content">
       <div class="meta" style="margin-bottom:8px">
         语音库目录：<code>qq-bridge/audio/</code>（改 <code>socialV2.voice.dir</code> 可换）。把音频文件丢进去即可被 AI 用 <code>qq_send_voice</code> 发出；
@@ -3289,6 +3373,117 @@ async function sendVoiceFromConsole() {
 }
 
 // ── 二代仿真模式（reserved2）配置 ─────────────────────────────────────────
+function moduleSettingsLink(path) {
+  const t = localStorage.getItem('consoleToken');
+  return t ? path + '?token=' + encodeURIComponent(t) : path;
+}
+
+async function loadV2Modules() {
+  document.querySelectorAll('[data-module-link]').forEach((a) => {
+    a.href = moduleSettingsLink(a.dataset.moduleLink || a.getAttribute('href') || '/');
+  });
+  const settle = async (p) => {
+    try { return await api(p); } catch { return null; }
+  };
+  const [b, t, q, m] = await Promise.all([
+    settle('/api/bili/settings'),
+    settle('/api/tts/settings'),
+    settle('/api/qzone/settings'),
+    settle('/api/music/settings')
+  ]);
+  const check = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v === true; };
+  const value = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+  const num = (id, v, d) => { const el = document.getElementById(id); if (el) el.value = Number.isFinite(Number(v)) ? Number(v) : d; };
+  const bs = b?.settings ?? {};
+  const as = bs.autoShare ?? {};
+  const mp4 = m?.settings?.mp4 ?? {};
+  check('v2ModBiliEnabled', bs.enabled !== false);
+  check('v2ModBiliAutoEnabled', as.enabled === true);
+  num('v2ModBiliAutoMaxPerDay', as.maxPerDay, 0);
+  check('v2ModBiliMp4Enabled', mp4.enabled !== false);
+  num('v2ModBiliMp4MaxMin', mp4.maxDurationMinutes, 10);
+  num('v2ModBiliPickCount', bs.interest?.pickCount, 3);
+  const ts = t?.settings ?? {};
+  check('v2ModTtsEnabled', ts.enabled !== false);
+  value('v2ModTtsActiveVoice', ts.activeVoice || '');
+  num('v2ModTtsMaxChars', ts.explicit?.maxChars, 300);
+  check('v2ModTtsAutoEnabled', ts.auto?.enabled === true);
+  num('v2ModTtsAutoProbability', ts.auto?.probability, 0.1);
+  const qs = q?.settings ?? {};
+  check('v2ModQzoneEnabled', qs.enabled === true);
+  num('v2ModQzoneDailyMin', qs.dailyMin, 1);
+  num('v2ModQzoneDailyMax', qs.dailyMax, 2);
+  check('v2ModQzoneReplyEnabled', qs.reply?.enabled === true);
+  check('v2ModQzoneImageEnabled', qs.image?.enabled === true);
+  check('v2ModQzoneNotifyEnabled', qs.notify?.enabled === true);
+  const ms = m?.settings?.music ?? {};
+  const mc = m?.settings?.cache ?? {};
+  check('v2ModMusicEnabled', ms.enabled !== false);
+  num('v2ModMusicMaxSeconds', ms.maxSeconds, 300);
+  num('v2ModMusicRecommendTags', ms.recommendTags, 3);
+  check('v2ModMusicAutoCards', ms.autoParseCards !== false);
+  num('v2ModMusicCacheDays', mc.days, 7);
+  num('v2ModMusicCacheMaxMb', mc.maxMb, 500);
+}
+
+async function saveV2Modules() {
+  const n = (id, d) => {
+    const v = Number(document.getElementById(id)?.value);
+    return Number.isFinite(v) ? v : d;
+  };
+  const c = (id) => document.getElementById(id)?.checked === true;
+  const jobs = [
+    ['/api/bili/settings', {
+      bili: {
+        enabled: c('v2ModBiliEnabled'),
+        autoShare: { enabled: c('v2ModBiliAutoEnabled'), maxPerDay: n('v2ModBiliAutoMaxPerDay', 0) },
+        interest: { pickCount: n('v2ModBiliPickCount', 3) }
+      }
+    }],
+    ['/api/tts/settings', {
+      settings: {
+        enabled: c('v2ModTtsEnabled'),
+        activeVoice: String(document.getElementById('v2ModTtsActiveVoice')?.value ?? '').trim(),
+        explicit: { maxChars: n('v2ModTtsMaxChars', 300) },
+        auto: { enabled: c('v2ModTtsAutoEnabled'), probability: n('v2ModTtsAutoProbability', 0.1) }
+      }
+    }],
+    ['/api/qzone/settings', {
+      settings: {
+        enabled: c('v2ModQzoneEnabled'),
+        dailyMin: n('v2ModQzoneDailyMin', 1),
+        dailyMax: n('v2ModQzoneDailyMax', 2),
+        reply: { enabled: c('v2ModQzoneReplyEnabled') },
+        image: { enabled: c('v2ModQzoneImageEnabled') },
+        notify: { enabled: c('v2ModQzoneNotifyEnabled') }
+      }
+    }],
+    ['/api/music/settings', {
+      music: {
+        enabled: c('v2ModMusicEnabled'),
+        maxSeconds: n('v2ModMusicMaxSeconds', 300),
+        recommendTags: n('v2ModMusicRecommendTags', 3),
+        autoParseCards: c('v2ModMusicAutoCards')
+      },
+      mp4: {
+        enabled: c('v2ModBiliMp4Enabled'),
+        maxDurationMinutes: n('v2ModBiliMp4MaxMin', 10)
+      },
+      cache: {
+        days: n('v2ModMusicCacheDays', 7),
+        maxMb: n('v2ModMusicCacheMaxMb', 500)
+      }
+    }]
+  ];
+  const results = await Promise.allSettled(jobs.map(([p, body]) => api(p, 'POST', body)));
+  const failed = [];
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') failed.push(jobs[i][0] + '：' + (r.reason?.message ?? r.reason));
+    else if (r.value?.ok === false) failed.push(jobs[i][0] + '：' + (r.value?.error || '失败'));
+  });
+  if (failed.length) throw new Error(failed.join('；'));
+}
+
 async function loadV2Config() {
   try {
     const r = await api('/api/socialV2/config');
@@ -3367,6 +3562,7 @@ async function loadV2Config() {
     document.getElementById('v2FeedbackMaxLength').value = fb.maxLength ?? 500;
     document.getElementById('v2FeedbackNotifyOwner').checked = fb.notifyOwnerOnError === true;
   } catch {}
+  void loadV2Modules();
 }
 
 async function saveV2Config() {
@@ -3454,10 +3650,13 @@ async function saveV2Config() {
     }
   };
   const r = await api('/api/socialV2/config', 'POST', body);
+  let moduleError = '';
+  try { await saveV2Modules(); } catch (e) { moduleError = String(e?.message ?? e); }
+  const ok = r.ok && !moduleError;
   const msg = document.getElementById('v2ConfigMsg');
-  msg.textContent = r.ok ? '✅ 已保存' : ('❌ ' + (r.error || '失败'));
-  msg.className = r.ok ? 'meta ok' : 'meta err';
-  if (r.ok) loadV2Config();
+  msg.textContent = ok ? '✅ 已保存（含可选插件）' : ('❌ ' + (r.error || moduleError || '失败'));
+  msg.className = ok ? 'meta ok' : 'meta err';
+  if (ok) loadV2Config();
 }
 
 async function viewV2State() {

@@ -1071,6 +1071,7 @@ function loadConfig() {
   // 登录是可选的：不登录走热门/搜索；登录后自动分享可以用 recommend 模式刷自己的推荐流。
   // 所有耗流量的动作都过 TokenBucket + 每日上限，避免把账号/额度刷穿。
   cfg.bili = {
+    enabled: true,
     requestIntervalMs: 400,
     burst: 4,
     timeoutMs: 20000,
@@ -1131,11 +1132,11 @@ function loadConfig() {
     }
   };
 
-  // 文字转语音（TTS）。默认全关掉的话不接管，配了就按 config.json 的 tts 段走。
-  cfg.tts = { enabled: false, ...(file.tts ?? {}) };
+  // 文字转语音（TTS）。默认开启，可在 config.json 的 tts 段或 v2 控制台里关闭。
+  cfg.tts = { enabled: true, ...(file.tts ?? {}) };
 
-  // QQ 空间说说（纯文字）。默认关；开了才按 qzone 段定时发。
-  cfg.qzone = { enabled: false, ...(file.qzone ?? {}) };
+  // QQ 空间说说（纯文字）。默认开启，可在 config.json 的 qzone 段或 v2 控制台里关闭。
+  cfg.qzone = { enabled: true, ...(file.qzone ?? {}) };
 
   // 人格卡注入上限（字符）。历史硬编码 6000，现在可配：每条约 4~6k token 的成本护栏。
   cfg.role = { maxInjectChars: ROLE_INJECT_MAX_CHARS_DEFAULT, ...(file.role ?? {}) };
@@ -2579,6 +2580,11 @@ async function main() {
   // 网易云 / QQ 音乐都没搜到时，去 B 站搜同名音乐视频并抽音频。
   // 不写音乐喜好词条，也不写 B 站兴趣词条（用户要求：B 站兜底找到的歌不录词条）。
   async function resolveBiliMusicFallback(query, { maxSeconds = 300 } = {}) {
+    if (cfg.bili?.enabled === false) {
+      const error = new Error('B 站功能已关闭（bili.enabled=false），无法兜底找歌');
+      error.code = 'BILI_DISABLED';
+      throw error;
+    }
     const found = await bili.find(query, { limit: 8, recordInterest: false });
     const videos = Array.isArray(found?.videos) ? found.videos.filter((v) => v?.bvid) : [];
     if (!videos.length) return null;
@@ -4511,6 +4517,14 @@ async function main() {
               if ('enabled' in pi) ni.enabled = pi.enabled === true;
               next.image = ni;
             }
+            if (patch.notify && typeof patch.notify === 'object') {
+              const pn = patch.notify;
+              const nn = { ...(next.notify ?? {}) };
+              if ('enabled' in pn) nn.enabled = pn.enabled === true;
+              if ('key' in pn) nn.key = String(pn.key ?? '');
+              if ('minGapMs' in pn) nn.minGapMs = Number(pn.minGapMs);
+              next.notify = nn;
+            }
             const normalized = normalizeQzoneConfig(next);
             raw.qzone = normalized;
             atomicWriteJson(path.join(ROOT, 'config.json'), raw);
@@ -4857,6 +4871,7 @@ async function main() {
             sendJson({
               ok: true,
               settings: {
+                enabled: b.enabled !== false,
                 intro: String(b.intro ?? ''),
                 recordHistory: b.recordHistory !== false,
                 requestIntervalMs: Number(b.requestIntervalMs) || 400,
@@ -4884,6 +4899,7 @@ async function main() {
             const file = readConfigObject(configFile);
             const current = file.bili && typeof file.bili === 'object' ? file.bili : {};
             const next = { ...current };
+            if ('enabled' in patch) next.enabled = patch.enabled !== false;
             const clampNum = (v, min, max, fallback) => {
               const n = Number(v);
               if (!Number.isFinite(n)) return fallback;
@@ -7107,6 +7123,7 @@ async function main() {
           if (!agentTokenOk(key, req.headers['x-agent-token'])) { sendJson({ ok: false, error: 'agent token 无效' }, 403); return; }
           if (!v2SessionAllowed(key)) { sendJson({ ok: false, error: '目标不在当前模式允许范围内' }, 403); return; }
           if (!v2ToolEnabled('biliShare')) { sendJson({ ok: false, error: '工具未启用：qq_bili_share' }, 403); return; }
+          if (cfg.bili?.enabled === false) { sendJson({ ok: false, error: 'B 站功能已关闭（bili.enabled=false）' }, 403); return; }
           try {
             const query = String(body.query ?? body.keyword ?? '').trim();
             const feedMode = String(body.mode ?? '').trim();
@@ -7139,6 +7156,7 @@ async function main() {
           if (!agentTokenOk(key, req.headers['x-agent-token'])) { sendJson({ ok: false, error: 'agent token 无效' }, 403); return; }
           if (!v2SessionAllowed(key)) { sendJson({ ok: false, error: '目标不在当前模式允许范围内' }, 403); return; }
           if (!v2ToolEnabled('biliShare')) { sendJson({ ok: false, error: '工具未启用：qq_bili_share' }, 403); return; }
+          if (cfg.bili?.enabled === false) { sendJson({ ok: false, error: 'B 站功能已关闭（bili.enabled=false）' }, 403); return; }
           if (socialV2.paused) { sendJson({ ok: false, error: '二代 AI 已暂停，不能分享视频' }, 403); return; }
           const keyMatch = /^(group|private):(\d+)$/.exec(key);
           if (!keyMatch) { sendJson({ ok: false, error: 'key 格式应为 group:群号 或 private:QQ号' }, 400); return; }
@@ -9683,6 +9701,7 @@ async function main() {
    * 「发送者版本过低，无法展示内容」，所以最终走「一句话 + 图片 + 文字」这条稳的路。
    */
   async function sendBiliMp4V2(key, video) {
+    if (cfg.bili?.enabled === false) return null;
     const mp4Cfg = cfg.bili?.mp4 ?? {};
     if (mp4Cfg.enabled === false) return null;
     const [kind, id] = String(key).split(':');
@@ -9786,6 +9805,7 @@ async function main() {
 
   /** 立刻跑一轮分享（面板上的「现在分享一条」和 /api/bili/run 都走它）。 */
   async function runBiliShareOnce({ key = '', reason = '手动' } = {}) {
+    if (cfg.bili?.enabled === false) throw new Error('B 站功能已关闭（bili.enabled=false）');
     const auto = cfg.bili?.autoShare ?? {};
     const dedupeMs = Math.max(1, Number(auto.dedupeHours) || 168) * 3600 * 1000;
     const rawTargets = key ? [key] : Array.isArray(auto.keys) ? auto.keys : [auto.key];
@@ -9842,6 +9862,7 @@ async function main() {
 
   /** 收到消息时随手嗅一下：有需求信号就搜一条视频，挂进缓存等下一次唤醒用。 */
   async function prepareBiliContext(key, text) {
+    if (cfg.bili?.enabled === false) return;
     const pc = cfg.bili?.contextPush ?? {};
     if (pc.enabled === false) return;
     if (!TOPIC_SIGNAL_RE.test(String(text ?? ''))) return;
@@ -9870,6 +9891,7 @@ async function main() {
 
   /** 把候选素材写进唤醒提示；没有素材时返回空串。 */
   function biliContextHint(key) {
+    if (cfg.bili?.enabled === false) return '';
     const pc = cfg.bili?.contextPush ?? {};
     if (pc.enabled === false) return '';
     const hit = biliCtxCache.get(key);
@@ -9890,6 +9912,10 @@ async function main() {
 
   function applyBiliAutoShare({ quiet = false } = {}) {
     stopBiliAutoShare();
+    if (cfg.bili?.enabled === false) {
+      if (!quiet) log('[bili] B 站功能已关闭');
+      return;
+    }
     const auto = cfg.bili?.autoShare ?? {};
     if (auto.enabled !== true) {
       if (!quiet) log('[bili] 自动分享已关闭');
