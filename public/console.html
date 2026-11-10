@@ -2108,7 +2108,7 @@ button:active:not(:disabled) {
           <div class="row"><label>B 站视频转 MP4</label><input type="checkbox" id="v2ModBiliMp4Enabled"></div>
           <div class="row"><label>MP4 时长上限（分钟）</label><input type="number" id="v2ModBiliMp4MaxMin" min="1" max="120" value="10"></div>
           <div class="row"><label>推荐流随机词条数</label><input type="number" id="v2ModBiliPickCount" min="1" max="10" value="3"></div>
-          <div class="meta">关闭 B 站能力后，音乐找不到歌时的 B 站兜底也会一起停用。<a href="/bili" data-module-link="/bili">完整设置 ↗</a></div>
+          <div class="meta">关闭 B 站能力后，音乐找不到歌时的 B 站兜底也会一起停用。<a href="/bili" target="_blank" rel="noopener" data-module-link="/bili">完整设置 ↗</a></div>
         </fieldset>
         <fieldset class="v2-module"><legend>🔊 TTS 语音</legend>
           <div class="row"><label>启用 TTS</label><input type="checkbox" id="v2ModTtsEnabled"></div>
@@ -2116,7 +2116,7 @@ button:active:not(:disabled) {
           <div class="row"><label>每次朗读字数上限</label><input type="number" id="v2ModTtsMaxChars" min="1" max="1000" value="300"></div>
           <div class="row"><label>自动语音</label><input type="checkbox" id="v2ModTtsAutoEnabled"></div>
           <div class="row"><label>自动语音概率（0~1）</label><input type="number" id="v2ModTtsAutoProbability" min="0" max="1" step="0.01" value="0.1"></div>
-          <div class="meta">音色、参考音频、翻译等高级项在完整设置里。<a href="/tts" data-module-link="/tts">完整设置 ↗</a></div>
+          <div class="meta">音色、参考音频、翻译等高级项在完整设置里。<a href="/tts" target="_blank" rel="noopener" data-module-link="/tts">完整设置 ↗</a></div>
         </fieldset>
         <fieldset class="v2-module"><legend>🌈 QQ 空间</legend>
           <div class="row"><label>启用 QQ 空间</label><input type="checkbox" id="v2ModQzoneEnabled"></div>
@@ -2125,7 +2125,7 @@ button:active:not(:disabled) {
           <div class="row"><label>自动回复评论</label><input type="checkbox" id="v2ModQzoneReplyEnabled"></div>
           <div class="row"><label>说说配图</label><input type="checkbox" id="v2ModQzoneImageEnabled"></div>
           <div class="row"><label>登录态失效提醒</label><input type="checkbox" id="v2ModQzoneNotifyEnabled"></div>
-          <div class="meta">Cookie、文风模型、时段等高级项在完整设置里。<a href="/qzone" data-module-link="/qzone">完整设置 ↗</a></div>
+          <div class="meta">Cookie、文风模型、时段等高级项在完整设置里。<a href="/qzone" target="_blank" rel="noopener" data-module-link="/qzone">完整设置 ↗</a></div>
         </fieldset>
         <fieldset class="v2-module"><legend>🎵 音乐</legend>
           <div class="row"><label>启用音乐解析</label><input type="checkbox" id="v2ModMusicEnabled"></div>
@@ -2134,7 +2134,7 @@ button:active:not(:disabled) {
           <div class="row"><label>自动解析群里的音乐卡片/链接</label><input type="checkbox" id="v2ModMusicAutoCards"></div>
           <div class="row"><label>缓存保留天数</label><input type="number" id="v2ModMusicCacheDays" min="1" max="365" value="7"></div>
           <div class="row"><label>缓存体积上限（MB）</label><input type="number" id="v2ModMusicCacheMaxMb" min="50" max="102400" value="500"></div>
-          <div class="meta">喜好词条、立即清缓存等在完整设置里。<a href="/music" data-module-link="/music">完整设置 ↗</a></div>
+          <div class="meta">喜好词条、立即清缓存等在完整设置里。<a href="/music" target="_blank" rel="noopener" data-module-link="/music">完整设置 ↗</a></div>
         </fieldset>
       </div>
       </div></details>
@@ -3381,6 +3381,8 @@ function moduleSettingsLink(path) {
 async function loadV2Modules() {
   document.querySelectorAll('[data-module-link]').forEach((a) => {
     a.href = moduleSettingsLink(a.dataset.moduleLink || a.getAttribute('href') || '/');
+    a.target = '_blank';
+    a.rel = 'noopener';
   });
   const settle = async (p) => {
     try { return await api(p); } catch { return null; }
