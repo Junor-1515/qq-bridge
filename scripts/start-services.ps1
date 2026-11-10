@@ -65,7 +65,7 @@ function Get-DshBaseUrl {
   foreach ($port in ($ports | Sort-Object -Unique)) {
     try {
       $resp = Invoke-WebRequest "http://127.0.0.1:$port/" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
-      if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { return "http://127.0.0.1:$port" }
+      if ($resp.StatusCode -eq 200 -or $resp.StatusCode -eq 401 -or $resp.StatusCode -eq 403) { return "http://127.0.0.1:$port" }
     } catch {
       $code = $null
       try { $code = [int]$_.Exception.Response.StatusCode } catch {}
