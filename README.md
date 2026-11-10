@@ -162,6 +162,8 @@ QQ 消息 ──► SnowLuma（OneBot v11 WS）──► 本桥接进程 ──�
 
 `node scripts/setup-dsh.mjs` 会一并安装它们；只想挂 MCP、不用 QQ 专用 preset 的话，也可以跳过插件部分，自己按 [docs/guides/DSH_SETUP.md](docs/guides/DSH_SETUP.md) 配。
 
+> B 站、音乐、TTS、QQ 空间都是**桥接内置模块**，不是独立的 DSH 插件，不需要额外安装；开关和常用配置在二代仿真控制台的「可选插件」区（默认开启），细项在各自的 `/bili`、`/music`、`/tts`、`/qzone` 页面。下面两个插件是另一回事，只管 preset 和设置页。
+
 ## 安装与配置
 
 ```bash
@@ -264,6 +266,8 @@ node scripts/setup-dsh.mjs
    ```
    看到 `SnowLuma 已连接` 即成功；然后 QQ 上给机器人账号发条消息测试。
    Windows 想要「崩溃自动重启」请改用 `start.bat`（见下节）。
+
+   也可以双击根目录的 `start-services.cmd`：它会先找当前 DSH 端口并写回 `config.json`，再补起没在跑的 SnowLuma 和桥接；如果 DSH 端口变了而桥接还在用旧地址，会自动重启桥接。`-Restart` 强制重启，`-OpenConsole` 完成后直接打开带 token 的控制台。SnowLuma 默认找仓库同级的 `..\SnowLuma`，装在别处就设环境变量 `SNOWLUMA_DIR`。
 
 ## 运行与运维
 
@@ -374,6 +378,25 @@ qq-bridge/
 - `qq_speak` 由 MCP 提供，改完 `src/mcp-snowluma-safe.js` 要重启 DSH 才会出现在工具列表里
 
 细节见 [docs/tts.md](docs/tts.md)。
+
+## B 站分享与视频
+
+B 站是**内置模块**，不是单独要装的插件：v2 仿真控制台的「可选插件 → B 站」默认开启，配置页在 `/bili?token=…`。
+
+- **分享视频**：MCP 工具 `qq_bili_share` 可以按关键词搜、从热门/推荐/排行里挑，也可以只返回候选列表不发送；先正常说一句话，再发封面和链接。
+- **自动分享**：可配置每天最多几条、活跃时段、按群聊话题或平时积累的喜好词条去找；B 站喜好词条会随搜索动态更新，满了淘汰最旧的。
+- **MP4**：只有通过桥接分享的 B 站视频才会尝试解析 MP4，默认直接以 **QQ 视频消息**发出，不走群文件；超过时长上限（默认 10 分钟）就只发链接。群里的 B 站链接不会自动解析成视频或语音，除非显式调用工具。
+- 开关与时长上限：`bili.enabled`、`bili.mp4.{enabled,maxDurationMinutes,sendAsFile}`；`sendAsFile` 改成 `true` 才会以群文件/私聊文件发送。自动分享在 `bili.autoShare`，喜好词条抽样数在 `bili.interest.pickCount`。
+
+## 音乐解析与推荐
+
+音乐同样是**内置模块**，v2 控制台的「可选插件 → 音乐」默认开启，配置页在 `/music?token=…`。
+
+- **自动解析**：群里发 QQ 音乐 / 网易云的**链接或音乐卡片**，桥接会解析成 MP3 语音发回；解析前只补一句纯歌曲信息。B 站链接不在自动解析范围内。
+- **主动找歌**：MCP 工具 `qq_play_music` 按歌名搜；`qq_recommend_music` 按平时积累的喜好词条随机推荐。两边都搜不到时会去 B 站找同名音乐视频抽音频兜底，B 站这次的结果不写入喜好词条。
+- **语音**：发送前会先发一句普通对话（用户直接发链接时除外），再发歌曲信息与语音条；单首最长默认 300 秒，超长会截断。
+- **缓存与词条**：MP3 缓存在 `state/media-cache/music`，B 站 MP4 缓存在 `state/media-cache/bili`，共用 `mediaCache.{days,maxMb}`（默认 7 天 / 500MB）清理；喜好词条在 `/music` 页面可以手动增删。
+- 配置键：`socialV2.music.{enabled,maxSeconds,autoParseCards,recommendTags}`。
 
 ## SnowLuma 版本与上游健康（「连上了但收不到消息」）
 
