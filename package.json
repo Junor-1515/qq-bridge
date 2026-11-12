@@ -1,6 +1,6 @@
 {
   "name": "qq-bridge",
-  "version": "0.2.1-r8",
+  "version": "0.2.1-r9",
   "private": true,
   "license": "MIT",
   "description": "Unofficial qq-bridge build tuned for JSNU's free local models: dynamic session rotation/archival plus chat summaries stretch short contexts, and Qwen multimodal describes images for DeepSeek-V4. Also adds video reading, Bilibili, music, TTS and QZone. Bridges SnowLuma (OneBot v11 / QQ) and the DeepSeek Harness Web API.",
