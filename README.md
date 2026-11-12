@@ -8,7 +8,7 @@
 > **非官方修改版**：本仓库基于 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge)（MIT）修改，加入了视频读取、音乐播放等扩展。原项目版权归 Derpyu520 及贡献者所有；本仓库不是官方发布，也不代表原项目。
 
 <p align="center">
-  <a href="https://github.com/Junor-1515/qq-bridge"><img alt="fork" src="https://img.shields.io/badge/GitHub-fork%20of%20Derpyu520%2Fqq-bridge-8b5cf6?style=flat-square&logo=github"></a>
+  <a href="https://github.com/Junor-1515/qq-bridge"><img alt="unofficial build" src="https://img.shields.io/badge/GitHub-unofficial%20build-8b5cf6?style=flat-square&logo=github"></a>
   <a href="https://github.com/Junor-1515/qq-bridge/releases"><img alt="release" src="https://img.shields.io/github/v/release/Junor-1515/qq-bridge?style=flat-square&color=ff8fc7"></a>
   <img alt="license" src="https://img.shields.io/badge/license-MIT-7dd3fc?style=flat-square">
   <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A522.13-339933?style=flat-square&logo=node.js&logoColor=white">
@@ -24,7 +24,7 @@
 
 <p align="center">
   <a href="#免费方案jsnu-短上下文适配--qwen-视觉">免费方案</a> ·
-  <a href="#这个-fork-的特色">特色</a> ·
+  <a href="#这个修改版的特色">特色</a> ·
   <a href="#功能">功能</a> ·
   <a href="#安装">安装</a> ·
   <a href="#配置">配置</a> ·
@@ -40,7 +40,7 @@
 
 ## 免费方案：JSNU 短上下文适配 + Qwen 视觉
 
-这个 fork 的重点不只是“多几个插件”，而是把 **江苏师范大学（JSNU）的免费本地模型**真正接进 QQ 群聊。JSNU 的 `deepseek-v4-flash` 上下文短、响应慢，而且不能读图；桥接用三件事绕开这些限制：
+这个修改版的重点不只是“多几个插件”，而是把 **江苏师范大学（JSNU）的免费本地模型**真正接进 QQ 群聊。JSNU 的 `deepseek-v4-flash` 上下文短、响应慢，而且不能读图；桥接用三件事绕开这些限制：
 
 - **动态新建 / 删除（归档）会话**：每个 QQ 群或好友对应一个 DSH 会话。累计输入超过 `socialV2.session.tokenBudget`（默认 30 万 token）、闲置超过 `idleRecycleMinutes`（默认 240 分钟），或到每日轮换时间（默认 05:00），桥接就停掉旧会话、归档，并在下一条消息新建一个。历史不会无限堆进同一个短上下文。
 - **摘要续接**：AI 退场/潜水期间的新消息不逐条塞回，而是整理成【群聊摘要】+【最近对话】，以静默 turn 投喂给会话。轮换后它仍知道刚才群里聊了什么，不必重放整段历史。
@@ -59,9 +59,9 @@
 
 > 轮换只在会话静默时发生，不会打断正在生成的一轮；换下的旧会话会被归档，不留在 DSH 左侧列表里。
 
-## 这个 fork 的特色
+## 这个修改版的特色
 
-本仓库是 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) 的**非官方 fork**，在保留原项目全部能力的基础上，重点做两件事：**用 JSNU 免费本地模型把对话成本压到接近零**，以及**让 AI 真的能听、能看、能分享**：
+本仓库是 [Derpyu520/qq-bridge](https://github.com/Derpyu520/qq-bridge) 的**非官方修改版**，在保留原项目全部能力的基础上，重点做两件事：**用 JSNU 免费本地模型把对话成本压到接近零**，以及**让 AI 真的能听、能看、能分享**：
 
 | 能力 | 做了什么 |
 | --- | --- |
@@ -73,7 +73,7 @@
 | 🌈 QQ 空间 | 定时发说说、按人格写文、从表情库挑配图、自动回评论、登录态失效时在 QQ 提醒 |
 | 🎛️ 统一开关 | 上面这些模块全部收进 **二代仿真控制台 → 可选插件**：默认开启，每个模块的常用配置就在开关下面，细项再点「完整设置」 |
 
-> 这些扩展是本 fork 自己加的，不属于原项目；遇到扩展相关的问题请提到本仓库，不要打扰上游。
+> 这些扩展是本仓库自己加的，不属于原项目；遇到扩展相关的问题请提到本仓库，不要打扰上游。
 
 > 🗂️ 文档索引（全部文档一句话说明 + 是否仍然有效）见 **[docs/README.md](docs/README.md)**；仓库目录/脚本命名约定见 **[docs/FOLDER_MAP.md](docs/FOLDER_MAP.md)**。
 >
@@ -133,7 +133,7 @@ QQ 消息 ──► SnowLuma（OneBot v11 WS）──► 本桥接进程 ──�
 ## 架构
 
 - **QQ 侧**：`@snowluma/sdk` 的 `SnowLumaWebSocketClient`（OneBot v11 WebSocket 客户端，自动重连）
-- **DSH 侧**：适配 DSH 0.1.2 起引入、**0.2.1-rc.2 上逐项复核**的协议——用本机持久化签名密钥铸造会话 Cookie 鉴权、`/api/<namespace>/<method>` 斜杠 RPC、`/api/remote.mux` + `session/follow` 事件流（`session/control` 的队列读 `value.projections[<id>].values.inbox`，另有一元 `session/projections` 主路径）；复用 `AbstractApiClient` 传输层但不再依赖旧版 zod value schema。会话模型由桥接按 `config.json` 的 `dsh.model` 逐会话 `session.selectModel` 固定（示例默认 `deepseek-flash` = DeepSeek-V41-Flash，多模态；本 fork 的免费部署改用 JSNU 的 `deepseek-v4-flash` 承担文本、`qwen3.8-27b` 承担视觉转述，见上节）
+- **DSH 侧**：适配 DSH 0.1.2 起引入、**0.2.1-rc.2 上逐项复核**的协议——用本机持久化签名密钥铸造会话 Cookie 鉴权、`/api/<namespace>/<method>` 斜杠 RPC、`/api/remote.mux` + `session/follow` 事件流（`session/control` 的队列读 `value.projections[<id>].values.inbox`，另有一元 `session/projections` 主路径）；复用 `AbstractApiClient` 传输层但不再依赖旧版 zod value schema。会话模型由桥接按 `config.json` 的 `dsh.model` 逐会话 `session.selectModel` 固定（示例默认 `deepseek-flash` = DeepSeek-V41-Flash，多模态；本修改版的免费部署改用 JSNU 的 `deepseek-v4-flash` 承担文本、`qwen3.8-27b` 承担视觉转述，见上节）
 - **agent 自主收发 QQ**：DSH 的 MCP 客户端（`~/.dsh/profiles/web/cordis.patch.yml` 配置）接入三个 MCP server：
   - `snowluma`（桥接自带 `src/mcp-snowluma-safe.js`）：QQ 动作**安全子集**（查状态/查群/查消息/发消息，发送强制白名单；发送工具支持可选 `replyToMessageId` 引用回复）
   - `snowluma-host`（桥接自带 `src/mcp-host-server.js`）：**只有** `snowluma_status`（只读探活 `get_login_info`）。
